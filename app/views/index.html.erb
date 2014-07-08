@@ -1,0 +1,23 @@
+<h1>Installers</h1>
+<%= @builder.platform_package_script_dir() %>
+<ui>
+    <% @builder.installers.each do |name| %>
+        <li><a href="packaging_and_install/<%= name %>"><%= name %></a></li>
+    <% end %>
+</ui>
+
+<h1>running</h1>
+<ui>
+<% @tasks.each_with_index do |status, index| %>
+    <li>
+        <%= status.is_active ? "(active)" : "(finished)" %>
+        <%= status.is_updated ? "(updated)" : "(NOT updated)" %>
+        <a href="install/<%= index %>"><%= status.name %></a></li>
+<% end %>
+</ui>
+
+<h1>temporaries</h1>
+<a href="/pre">tmps</a>
+
+<h1>install</h1>
+<a href="/install">install</a>

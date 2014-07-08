@@ -1,0 +1,10 @@
+#
+host: "127.0.0.1"
+port: 12321
+install_path: /usr/local/torigoya
+workspace_path: "/tmp"
+package_scripts_path: "%{_home}/../../torigoya_package_scripts"
+placeholder_path: "%{_home}/placeholder"
+apt_repository_path: "%{_home}/../apt_repository"
+target_system: "x86_64-linux-gnu"
+target_arch: "amd64"

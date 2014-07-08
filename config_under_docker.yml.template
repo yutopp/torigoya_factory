@@ -1,0 +1,17 @@
+#
+host: "127.0.0.1"
+port: 12321
+install_path: "/usr/local/torigoya"
+workspace_path: "/tmp"
+package_scripts_path: "/etc/package_scripts"
+placeholder_path: "/etc/placeholder"
+apt_repository_path: "/etc/apt_repository"
+target_system: "x86_64-linux-gnu"
+target_arch: "amd64"
+
+#
+use_notification: ""
+twitter_consumer_key: ""
+twitter_consumer_secret: ""
+twitter_access_token: ""
+twitter_access_token_secret: ""
