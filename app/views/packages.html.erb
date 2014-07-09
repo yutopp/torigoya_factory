@@ -1,0 +1,6 @@
+<h1>packages</h1>
+<ui>
+<% @registered_packages.each do |package_name| %>
+    <li><a href='/packages/delete/<%= package_name %>'><%= package_name %></a></li>
+<% end %>
+</ui>

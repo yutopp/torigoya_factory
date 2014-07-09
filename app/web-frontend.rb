@@ -117,9 +117,28 @@ get '/pre/delete/:name' do
   redirect '/pre'
 end
 
-=begin
+# ========================================
+get '/packages' do
+  @registered_packages, @err = Torigoya::Package::Recoder.packages_list(C.apt_repository_path)
+  if @registered_packages == nil
+    erb 'packages_error.html'.to_sym
+    return
+  end
 
-=end
+  erb 'packages.html'.to_sym
+end
+
+get '/packages/delete/:name' do
+  name = params['name']
+
+  @err = Torigoya::Package::Recoder.remove_from_apt_repository(C.apt_repository_path, name)
+  if @err != nil
+    erb 'packages_error.html'.to_sym
+  else
+    redirect '/packages'
+  end
+end
+
 
 get '/install' do
   begin
@@ -127,15 +146,15 @@ get '/install' do
       builder = Torigoya::BuildServer::Builder.new(C)
 
       #
-      err = builder.save_packages do |repository_path, placeholder_path, package_profiles|
-        update_requred, err = Torigoya::Package::Recoder.save_available_packages_table(repository_path, package_profiles)
-        next err if !err.nil? || update_requred == false
+      message, err = builder.save_packages do |placeholder_path, package_profiles|
+        update_requred, err = Torigoya::Package::Recoder.save_available_packages_table(C.apt_repository_path, package_profiles)
+        next "", err if !err.nil? || update_requred == false
 
-        err = Torigoya::Package::Recoder.add_to_apt_repository(repository_path, placeholder_path, package_profiles)
-        next err
+        message, err = Torigoya::Package::Recoder.add_to_apt_repository(C.apt_repository_path, placeholder_path, package_profiles)
+        next message, err
       end
       if err.nil?
-        out.write"succees"
+        out.write"succees: #{message}"
       else
         out.write"failed: #{err}"
       end

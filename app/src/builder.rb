@@ -116,7 +116,7 @@ module Torigoya
           end
         end
 
-        err = block.call(@config.apt_repository_path, @config.placeholder_path, pkg_profiles)
+        message, err = block.call(@config.placeholder_path, pkg_profiles)
 
         if err == nil && pkg_profiles.length > 0
           # delete temporary
@@ -127,7 +127,7 @@ module Torigoya
           end
         end
 
-        return err
+        return message, err
       end
 
 
