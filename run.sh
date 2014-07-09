@@ -3,7 +3,7 @@
 cwd=`pwd`
 
 APT_REPOSITORY_PATH=$cwd/apt_repository
-BUILD_SCRIPTS_REPOSITORY_PATH="/home/yutopp/repo/torigoya_package_scripts"
+BUILD_SCRIPTS_REPOSITORY_PATH=$cwd/../torigoya_package_scripts
 
 ./build.sh &&
 echo "start container => " &&
