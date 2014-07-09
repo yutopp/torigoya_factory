@@ -184,7 +184,7 @@ module Torigoya
         r_err_pipe, w_err_pipe = IO.pipe
 
         pid = nil
-        #@sema.synchronize do
+        @sema.synchronize do
           Dir.chdir( platform_package_script_dir() ) do
             # execute install script
             @config.logger.info "Execute! => #{script_name}"
@@ -199,7 +199,8 @@ module Torigoya
               "PARAM_MONTH" => month.to_s,
               "PARAM_DAY" => day.to_s,
               "PARAM_PLACEHOLDER_PATH" => @config.placeholder_path.to_s,
-              "PARAM_REUSE_BUILDDIR" => do_reuse == true ? '1' : '0'
+              "PARAM_REUSE_BUILDDIR" => (do_reuse == true ? '1' : '0'),
+              "PARAM_PACKAGE_PREFIX" => "torigoya-",
             }
 
             #
@@ -214,7 +215,7 @@ module Torigoya
 
             @config.logger.info "Spawned [#{script_name}] :: #{pid}"
           end # chdir
-        #end # @sema.synchronize
+        end # @sema.synchronize
         raise "unexpected... : pid is nil" if pid.nil?
 
         # read stdout

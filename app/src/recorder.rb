@@ -46,11 +46,12 @@ module Torigoya
         packages = package_profiles.map {|ppf| "#{placeholder_path}/#{ppf.package_name}"}
 
         packages.each do |package|
-          command = r.make_add_command(package)
+          command = r.make_add_command("#{package} 2>&1")   # redirect stderr to stdout
           puts "add to apt repository...", "=> #{command}"
-          result = system command
-          unless result
-            return "failed to add repository"
+          result = `#{command}`
+          status = $?
+          unless status != 0
+            return "failed to add repository #{result}"
           end
           puts "=> #{result ? "SUCCEEDED" : "FAILED"}"
         end

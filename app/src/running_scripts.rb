@@ -63,6 +63,11 @@ class RunningScripts
     @tasks << s
     return s
   end
+
+  def task_at(index)
+    raise "task_at :: out of range ${index}" if index < 0 || index >= @tasks.length
+    return @tasks[index]
+  end
 end
 
 

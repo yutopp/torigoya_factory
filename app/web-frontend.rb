@@ -28,15 +28,9 @@ get '/' do
 end
 
 
-
-#
-get '/packaging_and_install/:name' do
+def stream_status(status)
   stream do |out|
     begin
-      name = params['name']
-
-      status = install(name, false)
-
       output_index = 0
       while status.is_active || output_index < status.logs.length
         cur = status.logs.length
@@ -58,11 +52,43 @@ get '/packaging_and_install/:name' do
 end
 
 #
-get '/packaging_and_install/:name/reuse' do
-  name = params['name']
-  install(name, true)
+get '/packaging_and_install/:name' do
+  begin
+    name = params['name']
+    status = install(name, false)
+
+    stream_status(status)
+
+  rescue => e
+    "reised #{e}"
+  end
 end
 
+#
+get '/packaging_and_install/:name/reuse' do
+  begin
+    name = params['name']
+    status = install(name, true)
+
+    stream_status(status)
+
+  rescue => e
+    "reised #{e}"
+  end
+end
+
+#
+get '/status/:index' do
+  begin
+    index = params['index'].to_i
+    status = RunningScripts.instance.task_at(index)
+
+    stream_status(status)
+
+  rescue => e
+    "reised #{e}"
+  end
+end
 
 #
 get '/pre' do
