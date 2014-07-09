@@ -15,13 +15,13 @@ RUN gem install thin bundler fpm --no-rdoc --no-ri
 
 ADD nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80
-EXPOSE 8080
-
 RUN if [ ! -e /usr/local/torigoya ]; then mkdir /usr/local/torigoya; fi
 
 ADD app /etc/app
 ADD config_under_docker.yml /etc/app/config.yml
 RUN cd /etc/app; bundle update
+
+EXPOSE 80
+EXPOSE 8080
 
 CMD nginx && cd /etc/app && ruby web-frontend.rb
