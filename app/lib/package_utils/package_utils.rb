@@ -29,7 +29,7 @@ module Torigoya
         #
         @package_name = package_name
         @name, version = Util.parse_package_name( package_name )
-        @version = version.gsub( /^(999.)(.*)/, "trunk" ).gsub( /^(888.)(.*)/, "dev" ).gsub( /^(777.)(.*)/, "stable" )
+        @version = version.gsub( /^(999.)(.*)/, "head" ).gsub( /^(888.)(.*)/, "dev" ).gsub( /^(777.)(.*)/, "stable" )
         @display_version = version.gsub( /^(999.)/, "HEAD-" ).gsub( /^(888.)/, "DEV-" ).gsub( /^(777.)/, "STABLE-" )
       end
       attr_reader :package_name, :name, :version, :display_version

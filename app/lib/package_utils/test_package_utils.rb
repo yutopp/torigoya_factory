@@ -33,7 +33,7 @@ class PackageTest < Test::Unit::TestCase
     tag = Torigoya::Package::Tag.new( "torigoya-java9_999.2014.4.8.e912167e7ecf_amd64.deb" )
     assert_equal( "torigoya-java9_999.2014.4.8.e912167e7ecf_amd64.deb", tag.package_name )
     assert_equal( "java9", tag.name )
-    assert_equal( "trunk", tag.version )
+    assert_equal( "head", tag.version )
     assert_equal( "HEAD-2014.4.8.e912167e7ecf" , tag.display_version )
   end
 
@@ -42,7 +42,7 @@ class PackageTest < Test::Unit::TestCase
     tag = Torigoya::Package::Tag.new( "torigoya-llvm_999.2014.4.4.205650_amd64.deb" )
     assert_equal( "torigoya-llvm_999.2014.4.4.205650_amd64.deb", tag.package_name )
     assert_equal( "llvm", tag.name )
-    assert_equal( "trunk", tag.version )
+    assert_equal( "head", tag.version )
     assert_equal( "HEAD-2014.4.4.205650", tag.display_version )
   end
 
@@ -79,7 +79,7 @@ class PackageTest < Test::Unit::TestCase
       begin
         f_path = h.update_package( p_name, new_p_time )
 
-        assert_equal( "#{dir}/llvm-trunk.yml", f_path )
+        assert_equal( "#{dir}/llvm-head.yml", f_path )
         assert_equal( true, File.exists?( f_path ) )
       end
     end # Dir
@@ -151,8 +151,9 @@ class PackageTest < Test::Unit::TestCase
     Dir.mktmpdir do |dir|
       h = Torigoya::Package::ProfileHolder.new( dir )
 
-      pkgs = [ { name: "torigoya-llvm_999.2014.4.4.205650_amd64.deb", date: Time.now },
-               { name: "torigoya-llvm-3.4_3.4_amd64.deb", date: Time.now }
+      build_date = Time.now
+      pkgs = [ { name: "torigoya-llvm_999.2014.4.4.205650_amd64.deb", date: build_date },
+               { name: "torigoya-llvm-3.4_3.4_amd64.deb", date: build_date }
              ]
 
       begin
@@ -165,37 +166,10 @@ class PackageTest < Test::Unit::TestCase
         profs = h.list_profiles
 
         assert_equal( 2, profs.length )
-        assert_equal( pkgs[0][:name], profs[0].package_name )
-        assert_equal( pkgs[0][:date], profs[0].built_date )
-        assert_equal( pkgs[1][:name], profs[1].package_name )
-        assert_equal( pkgs[1][:date], profs[1].built_date )
-      end
-    end # Dir
-  end
-
-  #
-  def test_prof_list
-    Dir.mktmpdir do |dir|
-      h = Torigoya::Package::ProfileHolder.new( dir )
-
-      pkgs = [ { name: "torigoya-llvm_999.2014.4.4.205650_amd64.deb", date: Time.now },
-               { name: "torigoya-llvm-3.4_3.4_amd64.deb", date: Time.now }
-             ]
-
-      begin
-        pkgs.each do |e|
-          h.update_package( e[:name], e[:date] )
-        end
-      end
-
-      begin
-        profs = h.list_tag_and_date
-
-        assert_equal( 2, profs.length )
         #assert_equal( pkgs[0][:name], profs[0].package_name )
-        assert_equal( pkgs[0][:date], profs[0][:built_date] )
+        assert_equal( pkgs[0][:date], profs[0].built_date )
         #assert_equal( pkgs[1][:name], profs[1].package_name )
-        assert_equal( pkgs[1][:date], profs[1][:built_date] )
+        assert_equal( pkgs[1][:date], profs[1].built_date )
       end
     end # Dir
   end
