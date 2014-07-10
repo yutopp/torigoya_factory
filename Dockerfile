@@ -10,6 +10,7 @@ RUN apt-get install -y reprepro
 RUN apt-get install -y build-essential
 RUN apt-get install -y ruby ruby-dev
 RUN apt-get install -y git wget unzip python
+RUN apt-get install -y cmake
 
 RUN gem install thin bundler fpm --no-rdoc --no-ri
 
