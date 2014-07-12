@@ -2,11 +2,9 @@
 # encoding: utf-8
 require 'fileutils'
 require 'thread'
+require 'torigoya_kit'
 
-require_relative '../lib/package_utils/package_utils.rb'
 
-#
-#
 module Torigoya
   module BuildServer
 
@@ -110,7 +108,7 @@ module Torigoya
           Dir.glob( "*.deb" ) do |pkgname|
             #system( "cp -v #{pkgname} #{@config.for_copy_nfs_mount_path}/.")
             mtime = File::Stat.new( pkgname ).mtime
-            pkg_profiles << Package::AvailableProfile.new( pkgname, mtime )
+            pkg_profiles << TorigoyaKit::Package::AvailableProfile.new( pkgname, mtime )
 
             puts "=> #{pkgname} / #{mtime}"
           end

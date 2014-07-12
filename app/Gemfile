@@ -6,3 +6,5 @@ gem 'sinatra-contrib'
 gem 'thin'
 
 gem 'twitter'
+
+gem 'torigoya_kit'
