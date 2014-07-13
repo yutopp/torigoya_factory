@@ -16,7 +16,7 @@ set :server, :thin
 set :bind, '0.0.0.0'
 set :port, 8080
 
-also_reload 'src/proc_factory/*.rb'
+also_reload 'src/*.rb'
 
 
 #
@@ -154,13 +154,13 @@ get '/install' do
         next message, err
       end
       if err.nil?
-        out.write"succees: #{message}"
+        out.write "succees: #{message}"
       else
-        out.write"failed: #{err}"
+        out.write "failed: #{err}"
       end
     end
 
-  rescue IOError => e
-    puts e
+  rescue => e
+    puts "exception: #{e} / #{e.backtrace}"
   end
 end

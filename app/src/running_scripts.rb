@@ -80,7 +80,6 @@ def install(name, do_reuse = false)
 
   #
   th = Thread.new do
-    updated = false
     begin
       updated = builder.build_and_install_by_name(name, do_reuse) do |type, line|
         case type
@@ -91,7 +90,7 @@ def install(name, do_reuse = false)
         end # case
       end # block update=
 
-    rescue => e
+    rescue IOError => e
       puts "rescue => #{e}"
 
     ensure

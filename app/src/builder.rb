@@ -16,6 +16,7 @@ module Torigoya
         puts ""
         puts "=" * 50
         puts "== config"
+        puts "=" * 50
         puts "install_path            : #{@config.install_path}"
         puts "workspace               : #{@config.workspace_path}"
         puts "package_scripts_path    : #{@config.package_scripts_path}"
@@ -57,7 +58,7 @@ module Torigoya
 
       #
       def find_target_indexes_by_name( title )
-        indexes = title.chomp.split( ',' ).map{|s| Regexp.new(s) }.inject( Array.new ) do |arr, sel|
+        indexes = title.chomp.split( ',' ).map{|s| Regexp.new(Regexp.quote(s)) }.inject( Array.new ) do |arr, sel|
           @installers.each_with_index do |name, i|
             arr << i if sel === name
           end
@@ -174,6 +175,8 @@ module Torigoya
         @sema.synchronize do
           @running_tasks_num = @running_tasks_num + 1
         end
+
+        @config.logger.info "build_and_install #{script_name}"
 
         year, month, day, hour, min, sec = make_timestamp()
 

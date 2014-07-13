@@ -3,13 +3,13 @@
 cwd=`pwd`
 
 APT_REPOSITORY_PATH=$cwd/apt_repository
-BUILD_SCRIPTS_REPOSITORY_PATH=$cwd/../torigoya_package_scripts
+BUILD_SCRIPTS_REPOSITORY_PATH=$cwd/torigoya_package_scripts
 
 echo "Torigoya factory: *RELEASE* MODE"
 echo "Torigoya factory: an apt repository  : $APT_REPOSITORY_PATH"
 echo "Torigoya factory: scripts path       : $BUILD_SCRIPTS_REPOSITORY_PATH"
-echo "Torigoya factory: a port of files    : 50080"
-echo "Torigoya factory: a port of frontend : 58080"
+echo "Torigoya factory: a port of files    : 80"
+echo "Torigoya factory: a port of frontend : 8080"
 
 if [ ! -e $BUILD_SCRIPTS_REPOSITORY_PATH ]; then
     echo "There is no '$BUILD_SCRIPTS_REPOSITORY_PATH' directory."
