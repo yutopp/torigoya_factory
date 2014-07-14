@@ -2,6 +2,7 @@
 require 'sinatra'
 require 'sinatra/streaming'
 require 'sinatra/reloader'
+require 'sinatra/assetpack'
 require 'digest/sha2'
 
 require_relative "src/config"
@@ -27,6 +28,12 @@ helpers do
   def login?
     return session[:is_logged_in] == true
   end
+end
+
+register Sinatra::AssetPack
+assets do
+  serve '/css', :from => 'css'
+  css :application, ['/css/style.css']
 end
 
 #
@@ -86,27 +93,37 @@ end
 
 #
 get '/packaging_and_install/:name' do
-  begin
-    name = params['name']
-    status = install(name, false)
+  if login?
+    begin
+      name = params['name']
+      status = install(name, false)
 
-    stream_status(status)
+      stream_status(status)
 
-  rescue => e
-    "reised #{e}"
+    rescue => e
+      "reised #{e}"
+    end
+
+  else
+    return "To do this action, admin privilege is required."
   end
 end
 
 #
 get '/packaging_and_install/:name/reuse' do
-  begin
-    name = params['name']
-    status = install(name, true)
+  if login?
+    begin
+      name = params['name']
+      status = install(name, true)
 
-    stream_status(status)
+      stream_status(status)
 
-  rescue => e
-    "reised #{e}"
+    rescue => e
+      "reised #{e}"
+    end
+
+  else
+    return "To do this action, admin privilege is required."
   end
 end
 
@@ -124,7 +141,7 @@ get '/status/:index' do
 end
 
 #
-get '/pre' do
+get '/temp' do
   builder = Torigoya::BuildServer::Builder.new(C)
 
   @dir_name = builder.placeholder_path
@@ -135,19 +152,24 @@ get '/pre' do
     end
   end
 
-  erb 'pre.html'.to_sym
+  erb 'temp.html'.to_sym
 end
 
-get '/pre/delete/:name' do
-  builder = Torigoya::BuildServer::Builder.new(C)
+get '/temp/delete/:name' do
+  if login?
+    builder = Torigoya::BuildServer::Builder.new(C)
 
-  name = params['name']
+    name = params['name']
 
-  Dir.chdir(builder.placeholder_path) do
-    File.delete(name) if File.exists?(name)
+    Dir.chdir(builder.placeholder_path) do
+      File.delete(name) if File.exists?(name)
+    end
+
+    redirect '/temp'
+
+  else
+    return "To do this action, admin privilege is required."
   end
-
-  redirect '/pre'
 end
 
 # ========================================
@@ -162,38 +184,48 @@ get '/packages' do
 end
 
 get '/packages/delete/:name' do
-  name = params['name']
+  if login?
+    name = params['name']
 
-  @err = Torigoya::Package::Recoder.remove_from_apt_repository(C.apt_repository_path, name)
-  if @err != nil
-    erb 'packages_error.html'.to_sym
+    @err = Torigoya::Package::Recoder.remove_from_apt_repository(C.apt_repository_path, name)
+    if @err != nil
+      erb 'packages_error.html'.to_sym
+    else
+      redirect '/packages'
+    end
+
   else
-    redirect '/packages'
+    return "To do this action, admin privilege is required."
   end
 end
 
 
 get '/install' do
-  begin
-    stream do |out|
-      builder = Torigoya::BuildServer::Builder.new(C)
+  if login?
+    begin
+      stream do |out|
+        builder = Torigoya::BuildServer::Builder.new(C)
 
-      #
-      message, err = builder.save_packages do |placeholder_path, package_profiles|
-        update_requred, err = Torigoya::Package::Recoder.save_available_packages_table(C.apt_repository_path, package_profiles)
-        next "", err if !err.nil? || update_requred == false
+        #
+        message, err = builder.save_packages do |placeholder_path, package_profiles|
+          update_requred, err = Torigoya::Package::Recoder.save_available_packages_table(C.apt_repository_path, package_profiles)
+          next "", err if !err.nil? || update_requred == false
 
-        message, err = Torigoya::Package::Recoder.add_to_apt_repository(C.apt_repository_path, placeholder_path, package_profiles)
-        next message, err
+          message, err = Torigoya::Package::Recoder.add_to_apt_repository(C.apt_repository_path, placeholder_path, package_profiles)
+          next message, err
+        end
+        if err.nil?
+          out.write "succees: #{message}"
+        else
+          out.write "failed: #{err}"
+        end
       end
-      if err.nil?
-        out.write "succees: #{message}"
-      else
-        out.write "failed: #{err}"
-      end
+
+    rescue => e
+      puts "exception: #{e} / #{e.backtrace}"
     end
 
-  rescue => e
-    puts "exception: #{e} / #{e.backtrace}"
+  else
+    return "To do this action, admin privilege is required."
   end
 end
