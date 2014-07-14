@@ -3,9 +3,15 @@ source 'https://rubygems.org'
 gem 'sinatra'
 gem 'sinatra-contrib'
 gem 'sinatra-assetpack'
+gem "sinatra-activerecord"
+
+gem "sqlite3"
+gem "activerecord"
 
 gem 'thin'
 
 gem 'twitter'
 
 gem 'torigoya_kit'
+
+gem 'rake'

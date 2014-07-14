@@ -40,11 +40,14 @@ module Torigoya
         Dir.mkdir( @config.placeholder_path ) unless Dir.exists?( @config.placeholder_path )
 
         #
+        @package_list_revision = check_package_list_revision
+
+        #
         @running_tasks_num = 0
 
         @sema = Mutex.new
       end
-      attr_reader :installers, :running_tasks_num
+      attr_reader :installers, :running_tasks_num, :package_list_revision
 
 
       # ==============================
@@ -54,6 +57,21 @@ module Torigoya
 
       def placeholder_path
         return @config.placeholder_path
+      end
+
+      def check_package_list_revision
+        Dir.chdir(@config.package_scripts_path) do
+          return `git log --pretty=format:"%H" -1 | cut -c 1-10`
+        end
+      end
+
+      def pull_package_list
+        Dir.chdir(@config.package_scripts_path) do
+          message = `git pull origin master`
+          succeeded = $?.exitstatus == 0
+
+          return succeeded, message
+        end
       end
 
       #

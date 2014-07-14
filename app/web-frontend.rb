@@ -3,6 +3,8 @@ require 'sinatra'
 require 'sinatra/streaming'
 require 'sinatra/reloader'
 require 'sinatra/assetpack'
+require "sinatra/activerecord"
+
 require 'digest/sha2'
 
 require_relative "src/config"
@@ -12,6 +14,17 @@ require_relative "src/running_scripts"
 
 #
 C = Torigoya::BuildServer::Config.new
+HMAC_DIGEST = OpenSSL::Digest::Digest.new('sha1')
+
+class Log < ActiveRecord::Base
+end
+
+class WebHook < ActiveRecord::Base
+  self.table_name = 'webhooks'
+end
+
+class ScheduledTask < ActiveRecord::Base
+end
 
 #
 configure do
@@ -19,7 +32,8 @@ configure do
   set :bind, '0.0.0.0'
   set :port, 8080
   enable :sessions
-  set :session_secret, "ababab" # TODO: fix
+  set :session_secret, C.session_secret
+  set :database_file, 'database.yml'
 
   also_reload 'src/*.rb'
 end
@@ -42,8 +56,19 @@ get '/' do
   @tasks = RunningScripts.instance.tasks
   @is_logged_in = login?
   @is_nopass_mode = C.admin_pass_sha512.nil?
+  @logs = Log.all
 
   erb 'index.html'.to_sym
+end
+
+get '/pull_package_list' do
+  builder = Torigoya::BuildServer::Builder.new(C)
+  succeeded, message = builder.pull_package_list
+  if succeeded
+    redirect '/'
+  else
+    return message
+  end
 end
 
 get '/login' do
@@ -67,6 +92,10 @@ get "/logout" do
   session[:is_logged_in] = false
   redirect '/'
 end
+
+
+
+
 
 def stream_status(status)
   stream do |out|
@@ -227,5 +256,119 @@ get '/install' do
 
   else
     return "To do this action, admin privilege is required."
+  end
+end
+
+
+# ==================================================
+# webhook
+# ==================================================
+
+get "/webhooks" do
+  @hooks = WebHook.all
+  erb 'webhooks.html'.to_sym
+end
+
+post "/webhooks/append" do
+  if login?
+    begin
+      target = params['target']
+      secret = params['secret']
+      script = params['script']
+      raise "target is nil" if target.nil?
+      raise "secret is nil" if secret.nil?
+      raise "script is nil" if script.nil?
+
+      hook = WebHook.new(target: target, secret: secret, script: script)
+      hook.save!
+
+      redirect "/webhooks"
+
+    rescue => e
+      "reised: #{e}"
+    end
+
+  else
+    return "To do this action, admin privilege is required."
+  end
+end
+
+post "/webhooks/update/:id" do
+  if login?
+    begin
+      id = params['id']
+      target = params['target']
+      secret = params['secret']
+      script = params['script']
+      raise "id is nil" if id.nil?
+      raise "target is nil" if target.nil?
+      raise "secret is nil" if secret.nil?
+      raise "script is nil" if script.nil?
+
+      hook = WebHook.find(id.to_i)
+      hook.target = target
+      hook.secret = secret
+      hook.script = script
+      hook.save!
+
+      redirect "/webhooks"
+
+    rescue => e
+      "reised: #{e}"
+    end
+
+  else
+    return "To do this action, admin privilege is required."
+  end
+end
+
+post "/webhooks/delete/:id" do
+  if login?
+    begin
+      id = params['id']
+      raise "id is nil" if id.nil?
+
+      hook = WebHook.find(id.to_i)
+      hook.destroy!
+
+      redirect "/webhooks"
+
+    rescue => e
+      "reised: #{e}"
+    end
+
+  else
+    return "To do this action, admin privilege is required."
+  end
+end
+
+# requested by webhook
+post "/webhook/:target" do
+  begin
+    target = params['target']
+    body = request.body.read
+    payload = JSON.parse(body)
+
+    github_sig = request.env['HTTP_X_HUB_SIGNATURE']
+
+    hook = WebHook.find_by_target(target)
+
+    expected_sig = 'sha1='+OpenSSL::HMAC.hexdigest(HMAC_DIGEST, hook.secret, body)
+    raise "invalid signature" if github_sig != expected_sig
+
+    payload = JSON.parse(body)
+    log = Log.new(title: "webhook: #{target}", content: "#{payload.to_s}", status: 0)
+    log.save!
+
+    install(hook.script, false)
+
+    return 200
+
+  rescue => e
+    puts "exception: #{e}"
+    e.backtrace.each do |t|
+      puts "> #{t}"
+    end
+    return 400
   end
 end

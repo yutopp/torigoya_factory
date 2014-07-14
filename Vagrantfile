@@ -27,7 +27,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   #
   config.vm.provision :shell, :inline => ["apt-get -y update && apt-get -y upgrade",
-                                          "apt-get install -y nginx",
+                                          "apt-get install -y nginx libsqlite3-dev",
                                           "apt-get install -y reprepro",
                                           "apt-get install -y build-essential",
                                           "apt-get install -y ruby ruby-dev",

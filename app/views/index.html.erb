@@ -8,7 +8,9 @@
 <% end %>
 
 <h1>Installers</h1>
-<%= @builder.platform_package_script_dir() %>
+<%= @builder.platform_package_script_dir() %><br>
+<%= @builder.package_list_revision %>
+<a href="/pull_package_list">git pull origin master</a>
 <ui>
     <% @builder.installers.each do |name| %>
         <li><a href="packaging_and_install/<%= name %>"><%= name %></a></li>
@@ -27,6 +29,16 @@
 
 <h1>temporaries</h1>
 <a href="/temp">tmps</a>
+
+<h1>Webhooks</h1>
+<a href="/webhooks">webhook</a>
+
+<h1>Logs</h1>
+<ui>
+<% @logs.each do |log| %>
+    <li><%= "#{log.title} - #{log.created_at}" %></li>
+<% end %>
+</ui>
 
 <h1>packages</h1>
 <a href="/packages">packages</a>

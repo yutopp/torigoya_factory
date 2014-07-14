@@ -1,6 +1,4 @@
 #
-host: "127.0.0.1"
-port: 12321
 install_path: "/usr/local/torigoya"
 workspace_path: "/tmp"
 package_scripts_path: "/etc/package_scripts"
@@ -8,6 +6,10 @@ placeholder_path: "/etc/placeholder"
 apt_repository_path: "/etc/apt_repository"
 target_system: "x86_64-linux-gnu"
 target_arch: "amd64"
+
+#
+admin_pass_sha512: "[put your password. see README]"
+session_secret: "[put random string]"
 
 #
 use_notification: ""

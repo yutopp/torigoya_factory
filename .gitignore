@@ -1,4 +1,4 @@
-config_under_docker.yml
+config.in_docker.yml
 *.lock
 
 apt_repository/*

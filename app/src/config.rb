@@ -62,6 +62,7 @@ module Torigoya
         if @admin_pass_sha512.nil?
           puts "Run with NO ADMIN mode"
         end
+        @session_secret         = @config['session_secret']
 
         @notification           = @config['use_notification']
         @twitter_client         = nil
@@ -79,7 +80,8 @@ module Torigoya
       end
       attr_reader :host, :port, :install_path, :workspace_path, :placeholder_path, :package_scripts_path
       attr_reader :apt_repository_path, :target_system, :target_arch
-      attr_reader :notification, :twitter_client, :admin_pass_sha512
+      attr_reader :admin_pass_sha512, :session_secret
+      attr_reader :notification, :twitter_client
     end
 
   end # module BuildServer
