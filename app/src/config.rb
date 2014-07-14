@@ -58,6 +58,11 @@ module Torigoya
         @target_system          = @config['target_system']
         @target_arch            = @config['target_arch']
 
+        @admin_pass_sha512      = @config['admin_pass_sha512']
+        if @admin_pass_sha512.nil?
+          puts "Run with NO ADMIN mode"
+        end
+
         @notification           = @config['use_notification']
         @twitter_client         = nil
         # TODO: fixme
@@ -74,7 +79,7 @@ module Torigoya
       end
       attr_reader :host, :port, :install_path, :workspace_path, :placeholder_path, :package_scripts_path
       attr_reader :apt_repository_path, :target_system, :target_arch
-      attr_reader :notification, :twitter_client
+      attr_reader :notification, :twitter_client, :admin_pass_sha512
     end
 
   end # module BuildServer

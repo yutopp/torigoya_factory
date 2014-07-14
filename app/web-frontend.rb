@@ -2,6 +2,7 @@
 require 'sinatra'
 require 'sinatra/streaming'
 require 'sinatra/reloader'
+require 'digest/sha2'
 
 require_relative "src/config"
 require_relative "src/builder"
@@ -12,21 +13,53 @@ require_relative "src/running_scripts"
 C = Torigoya::BuildServer::Config.new
 
 #
-set :server, :thin
-set :bind, '0.0.0.0'
-set :port, 8080
+configure do
+  set :server, :thin
+  set :bind, '0.0.0.0'
+  set :port, 8080
+  enable :sessions
+  set :session_secret, "ababab" # TODO: fix
 
-also_reload 'src/*.rb'
+  also_reload 'src/*.rb'
+end
 
+helpers do
+  def login?
+    return session[:is_logged_in] == true
+  end
+end
 
 #
 get '/' do
   @builder = Torigoya::BuildServer::Builder.new(C)
   @tasks = RunningScripts.instance.tasks
+  @is_logged_in = login?
+  @is_nopass_mode = C.admin_pass_sha512.nil?
 
   erb 'index.html'.to_sym
 end
 
+get '/login' do
+  erb 'login.html'.to_sym
+end
+
+post "/login" do
+  if params.has_key?("password")
+    if C.admin_pass_sha512.nil? || C.admin_pass_sha512 == Digest::SHA512.hexdigest(params["password"])
+      session[:is_logged_in] = true
+      redirect '/'
+    else
+      return "Authenication failed"
+    end
+  else
+    return "error"
+  end
+end
+
+get "/logout" do
+  session[:is_logged_in] = false
+  redirect '/'
+end
 
 def stream_status(status)
   stream do |out|

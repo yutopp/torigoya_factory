@@ -1,3 +1,12 @@
+<% if @is_logged_in == true %>
+    LOGGED IN <a href="/logout">logout</a><br>
+<% else %>
+    <a href="/login">login</a>
+<% end %>
+<% if @is_nopass_mode == true %>
+    <strong>NO PASS MODE</strong><br>
+<% end %>
+
 <h1>Installers</h1>
 <%= @builder.platform_package_script_dir() %>
 <ui>
