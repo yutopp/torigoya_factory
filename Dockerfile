@@ -17,6 +17,8 @@ RUN gem install thin bundler fpm --no-rdoc --no-ri
 
 ADD nginx.conf /etc/nginx/nginx.conf
 
+RUN if [ ! -e /usr/local/torigoya ]; then mkdir /usr/local/torigoya; fi
+
 ADD app /etc/app
 ADD config.in_docker.yml /etc/app/config.yml
 RUN cd /etc/app; bundle update
