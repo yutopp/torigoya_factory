@@ -5,7 +5,8 @@ apt_repository/*
 !apt_repository/conf
 !apt_repository/conf/distributions
 
-placeholder
+placeholder/
+packages_shadow/
 
 .vagrant
 torigoya_package_scripts
