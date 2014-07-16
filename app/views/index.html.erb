@@ -13,7 +13,7 @@
 <a href="/pull_package_list">git pull origin master</a>
 <ui>
     <% @builder.installers.each do |name| %>
-        <li><a href="packaging_and_install/<%= name %>"><%= name %></a></li>
+        <li><a href="packaging_and_install/<%= name %>"><%= name %></a>(<a href="packaging_and_install/<%= name %>/reuse">reuse</a>)</li>
     <% end %>
 </ui>
 

@@ -104,3 +104,28 @@ def install(name, do_reuse = false)
 
   return status
 end
+
+
+##
+def stream_status(status)
+  stream do |out|
+    begin
+      output_index = 0
+      while status.is_active || output_index < status.logs.length
+        cur = status.logs.length
+        status.logs[output_index...cur].each do |l|
+          out.write(l.class.to_s + " : " + l.line + "<br>")
+        end
+        output_index = cur
+
+        sleep 0.5
+      end
+      status.join
+
+      out.write status.is_updated ? "succeeded!<br>" : "failed<br>"
+
+    rescue IOError => e
+      puts e
+    end
+  end
+end
