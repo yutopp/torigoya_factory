@@ -4,15 +4,15 @@ MAINTAINER yutopp
 RUN locale-gen --no-purge en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
-RUN apt-get -y update && apt-get -y upgrade
-RUN apt-get install -y nginx
-RUN apt-get install -y reprepro
-RUN apt-get install -y build-essential
-RUN apt-get install -y ruby ruby-dev
-RUN apt-get install -y libsqlite3-dev
-RUN apt-get install -y cmake subversion clang wget zip unzip perl python autoconf
-RUN apt-get install -y git groff
-RUN apt-get install -y diffutils texinfo flex guile-2.0-dev autogen tcl expect dejagnu gperf gettext automake m4
+RUN apt-get -y update && apt-get -y upgrade && apt-get install -y --fix-missing \
+nginx reprepro \
+build-essential \
+ruby ruby-dev \
+libsqlite3-dev \
+cmake subversion clang wget zip unzip perl python autoconf \
+git groff \
+diffutils texinfo flex guile-2.0-dev autogen tcl expect dejagnu gperf gettext automake m4
+
 RUN cd /etc; git clone https://github.com/yutopp/torigoya_package_scripts.git package_scripts
 
 RUN gem install thin bundler fpm --no-rdoc --no-ri
