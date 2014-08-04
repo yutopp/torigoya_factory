@@ -4,6 +4,7 @@ require 'sinatra/streaming'
 require 'sinatra/reloader'
 require 'sinatra/assetpack'
 require "sinatra/activerecord"
+require 'erubis'
 
 require 'net/http'
 require 'digest/sha2'
@@ -42,6 +43,7 @@ configure do
   enable :sessions
   set :session_secret, C.session_secret
   set :database_file, 'database.yml'
+  set :erb, :escape_html => true
 
   also_reload 'src/*.rb'
 end
@@ -65,6 +67,15 @@ def unauthed_error()
 end
 
 def exception_raised(e)
+  begin
+    content = e.backtrace.join("\n")
+    log = Log.new(title: "exception: #{e}", content: content, status: -1)
+    log.save!
+
+  rescue => e
+    # ...
+  end
+
   status 500
   return "reised: #{e}"
 end
@@ -77,7 +88,7 @@ get '/' do
   @tasks = RunningScripts.instance.tasks
   @is_logged_in = login?
   @is_nopass_mode = C.admin_pass_sha512.nil?
-  @logs = Log.all
+  @logs = Log.all.order('created_at DESC')
 
   erb 'index.html'.to_sym
 end
@@ -118,11 +129,11 @@ post '/deliver_messages' do
       redirect "/deliver_messages"
 
     rescue => e
-      "reised: #{e}"
+      return exception_raised(e)
     end
 
   else
-    return "To do this action, admin privilege is required."
+    return unauthed_error()
   end
 end
 
@@ -147,6 +158,15 @@ get '/deliver_messages/update_packages' do
   if login?
     begin
       @results = update_nodes_packages()
+      title, status = if @results.any? {|r| r[:is_error] == true}
+                        ["there are any error", -1]
+                      else
+                        ["", 0]
+                      end
+
+      log = Log.new(title: "update_packages: #{title}", content: @results.to_s, status: status)
+      log.save!
+
       return @results.to_s
 
     rescue => e
@@ -300,11 +320,11 @@ get '/packaging_and_install/:name' do
       stream_status(status)
 
     rescue => e
-      "reised #{e}"
+      return exception_raised(e)
     end
 
   else
-    return "To do this action, admin privilege is required."
+    return unauthed_error()
   end
 end
 
@@ -318,11 +338,11 @@ get '/packaging_and_install/:name/reuse' do
       stream_status(status)
 
     rescue => e
-      "reised #{e}"
+      return exception_raised(e)
     end
 
   else
-    return "To do this action, admin privilege is required."
+    return unauthed_error()
   end
 end
 
@@ -333,14 +353,25 @@ end
 # ========================================
 #
 get '/status/:index' do
-  begin
-    index = params['index'].to_i
-    status = RunningScripts.instance.task_at(index)
+  if login?
+    begin
+      index = params['index'].to_i
+      status = RunningScripts.instance.task_at(index)
+      if status.is_active
+        stream_status(status)
+      else
+        id = status.log_id
+        raise "log_id is nil.." if id.nil?
 
-    stream_status(status)
+        redirect "/log/#{id}"
+      end
 
-  rescue => e
-    "reised #{e}"
+    rescue => e
+      return exception_raised(e)
+    end
+
+  else
+    return unauthed_error()
   end
 end
 
@@ -378,7 +409,7 @@ get '/temp/delete/:name' do
     redirect '/temp'
 
   else
-    return "To do this action, admin privilege is required."
+    return unauthed_error()
   end
 end
 
@@ -409,7 +440,7 @@ get '/packages/delete/:name' do
     end
 
   else
-    return "To do this action, admin privilege is required."
+    return unauthed_error()
   end
 end
 
@@ -442,16 +473,16 @@ get '/install' do
           end
 
         rescue => e
-          puts "exception: #{e} / #{e.backtrace}"
+          return exception_raised(e)
         end
       end
 
     rescue => e
-      puts "exception: #{e} / #{e.backtrace}"
+      return exception_raised(e)
     end
 
   else
-    return "To do this action, admin privilege is required."
+    return unauthed_error()
   end
 end
 
@@ -482,11 +513,11 @@ post "/webhooks/append" do
       redirect "/webhooks"
 
     rescue => e
-      "reised: #{e}"
+      return exception_raised(e)
     end
 
   else
-    return "To do this action, admin privilege is required."
+    return unauthed_error()
   end
 end
 
@@ -511,11 +542,11 @@ post "/webhooks/update/:id" do
       redirect "/webhooks"
 
     rescue => e
-      "reised: #{e}"
+      return exception_raised(e)
     end
 
   else
-    return "To do this action, admin privilege is required."
+    return unauthed_error()
   end
 end
 
@@ -531,11 +562,11 @@ post "/webhooks/delete/:id" do
       redirect "/webhooks"
 
     rescue => e
-      "reised: #{e}"
+      return exception_raised(e)
     end
 
   else
-    return "To do this action, admin privilege is required."
+    return unauthed_error()
   end
 end
 
@@ -562,11 +593,7 @@ post "/webhook/:target" do
     return 200
 
   rescue => e
-    puts "exception: #{e}"
-    e.backtrace.each do |t|
-      puts "> #{t}"
-    end
-    return 400
+    return exception_raised(e)
   end
 end
 
@@ -576,14 +603,38 @@ end
 #
 # ========================================
 get "/log/:id" do
-  begin
-    id = params['id']
-    raise "id is nil" if id.nil?
-    @log = Log.find(id.to_i)
+  if login?
+    begin
+      id = params['id']
+      raise "id is nil" if id.nil?
+      @log = Log.find(id.to_i)
 
-    erb 'log.html'.to_sym
+      erb 'log.html'.to_sym
 
-  rescue => e
-    exception_raised(e)
+    rescue => e
+      exception_raised(e)
+    end
+
+  else
+    return unauthed_error()
+  end
+end
+
+get "/log/delete/:id" do
+  if login?
+    begin
+      id = params['id']
+      raise "id is nil" if id.nil?
+
+      Log.find(id.to_i).destroy!
+
+      redirect '/'
+
+    rescue => e
+      exception_raised(e)
+    end
+
+  else
+    return unauthed_error()
   end
 end

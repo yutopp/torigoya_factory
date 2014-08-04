@@ -22,13 +22,15 @@ class Status
     @is_active = true
     @is_updated = false
     @logs = []
+    @log_id = nil
     @thread = nil
   end
-  attr_reader :name, :is_active, :is_updated, :logs
+  attr_reader :name, :is_active, :is_updated, :logs, :log_id
 
-  def finished( is_updated )
+  def finished( is_updated, log_id )
     @is_active = false
     @is_updated = is_updated
+    @log_id = log_id
   end
 
   def append_stdout_line(line)
@@ -46,6 +48,12 @@ class Status
   def join()
     @thread.join unless @thread.nil?
     @thread = nil
+  end
+
+  def cleanup_if_unused()
+    unless @is_active
+      @logs = []
+    end
   end
 end # class Status
 
@@ -94,8 +102,20 @@ def install(name, do_reuse = false)
       puts "rescue => #{e}"
 
     ensure
-      # client.update("failed #{name} @yutopp") unless updated
-      status.finished(updated)
+      log_id = nil
+      begin
+        # client.update("failed #{name} @yutopp") unless updated
+        log = Log.new(title: "packaging: #{status.name}",
+                      content: status.logs.map{|l| l.class.to_s + " : " + l.line}.join(''),
+                      status: if updated then 0 else -1 end
+                      )
+        log.save!
+        log_id = log.id
+      rescue => e
+        # ...
+      end
+
+      status.finished(updated, log_id)
     end
   end # Thread.new
 
@@ -128,4 +148,7 @@ def stream_status(status)
       puts e
     end
   end
+
+ensure
+  status.cleanup_if_unused
 end

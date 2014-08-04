@@ -39,7 +39,7 @@
 <h1>Logs</h1>
 <ui>
 <% @logs.each do |log| %>
-    <li><a href="/log/<%= log.id %>"><%= "#{log.title} - #{log.created_at}" %></a></li>
+    <li><a href="/log/<%= log.id %>"><%= "#{log.title} - #{log.created_at} [#{log.status}]" %></a>(<a href="/log/delete/<%= log.id %>">D</a>)</li>
 <% end %>
 </ui>
 
