@@ -3,10 +3,22 @@
 require 'fileutils'
 require 'thread'
 require 'torigoya_kit'
-
+require 'singleton'
 
 module Torigoya
   module BuildServer
+    class Guard
+      include Singleton
+
+      def initialize
+        @m = Mutex.new
+      end
+      attr_reader :m
+
+      def self.sync(&block)
+        Guard.instance.m.synchronize &block
+      end
+    end
 
     class Builder
       def initialize(config)
@@ -60,8 +72,10 @@ module Torigoya
       end
 
       def check_package_list_revision
-        Dir.chdir(@config.package_scripts_path) do
-          return `git log --pretty=format:"%H" -1 | cut -c 1-10`
+        Guard.sync do
+          Dir.chdir(@config.package_scripts_path) do
+            return `git log --pretty=format:"%H" -1 | cut -c 1-10`
+          end
         end
       end
 
@@ -180,11 +194,13 @@ module Torigoya
 
       #
       def make_packages_list
-        packages_list = Dir.chdir( platform_package_script_dir() ) do
-          next Dir::glob( "*.#{@platform_config[:ext]}" ).select {|f| f[0] != '_'}
-        end
+        Guard.sync do
+          packages_list = Dir.chdir( platform_package_script_dir() ) do
+            next Dir::glob( "*.#{@platform_config[:ext]}" ).select {|f| f[0] != '_'}
+          end
 
-        return packages_list.sort!
+          return packages_list.sort!
+        end
       end
 
 
