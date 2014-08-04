@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140714085339) do
+ActiveRecord::Schema.define(version: 20140803235651) do
 
   create_table "logs", force: true do |t|
     t.string   "title"
@@ -19,6 +19,10 @@ ActiveRecord::Schema.define(version: 20140714085339) do
     t.integer  "status"
     t.datetime "created_at"
     t.datetime "updated_at"
+  end
+
+  create_table "node_api_addresses", force: true do |t|
+    t.string "address"
   end
 
   create_table "webhooks", force: true do |t|
