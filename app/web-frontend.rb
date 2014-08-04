@@ -77,7 +77,7 @@ def exception_raised(e)
   end
 
   status 500
-  return "reised: #{e}"
+  return "exception raised: #{e}"
 end
 
 # ========================================
@@ -141,8 +141,8 @@ end
 get '/deliver_messages/update_proc_table' do
   if login?
     begin
-      @results = update_nodes_proc_table()
-      return @results.to_s
+      @results, e = update_nodes_proc_table_with_error_handling()
+      erb 'update_proc_table.html'.to_sym
 
     rescue => e
       return exception_raised(e)
@@ -157,17 +157,8 @@ end
 get '/deliver_messages/update_packages' do
   if login?
     begin
-      @results = update_nodes_packages()
-      title, status = if @results.any? {|r| r[:is_error] == true}
-                        ["there are any error", -1]
-                      else
-                        ["", 0]
-                      end
-
-      log = Log.new(title: "update_packages: #{title}", content: @results.to_s, status: status)
-      log.save!
-
-      return @results.to_s
+      @results, e = update_nodes_packages_with_error_handling()
+      erb 'update_packages.html'.to_sym
 
     rescue => e
       return exception_raised(e)
@@ -178,86 +169,6 @@ get '/deliver_messages/update_packages' do
   end
 end
 
-
-def update_nodes_proc_table()
-  m = NodeApiAddress.find(1)
-  address = m.address
-
-  response = JSON.parse(Net::HTTP.get(URI.parse(address)))
-  raise "is_error != false" if response["is_error"] != false
-
-  results = []
-
-  q = Queue.new()
-  response["nodes"].each{|n| q.push(n)}
-  exec_in_workers(q) do |n|
-    r = {
-      address: n["addr"],
-      port: n["port"],
-    }
-
-    begin
-      s = TorigoyaKit::Session.new(n["addr"], n["port"])
-      s.update_proc_table()
-
-      r[:is_error] = false
-      results << r
-
-    rescue => e
-      r[:is_error] = true
-      results << r
-    end
-  end # exec_in_workers do
-
-  return results
-end
-
-def update_nodes_packages()
-  m = NodeApiAddress.find(1)
-  address = m.address
-
-  response = JSON.parse(Net::HTTP.get(URI.parse(address)))
-  raise "is_error != false" if response["is_error"] != false
-
-  results = []
-
-  q = Queue.new()
-  response["nodes"].each{|n| q.push(n)}
-  exec_in_workers(q) do |n|
-    r = {
-      address: n["addr"],
-      port: n["port"],
-    }
-
-    begin
-      s = TorigoyaKit::Session.new(n["addr"], n["port"])
-      s.update_packages()
-
-      r[:is_error] = false
-      results << r
-
-    rescue => e
-      r[:is_error] = true
-      results << r
-    end
-  end # exec_in_workers do
-
-  return results
-end
-
-def exec_in_workers(queue, &block)
-  workers = (0...4).map do
-    Thread.new do
-      begin
-        while n = queue.pop(true)
-          block.call(n)
-        end
-      rescue ThreadError
-      end
-    end
-  end
-  workers.map(&:join)
-end
 
 # ========================================
 #
@@ -449,33 +360,18 @@ end
 # ========================================
 #
 # ========================================
-get '/install' do
+get '/register_to_repository' do
   if login?
     begin
-      stream do |out|
-        begin
-          builder = Torigoya::BuildServer::Builder.new(C)
+      message, err = register_to_repository()
 
-          #
-          message, err = builder.save_packages do |placeholder_path, package_profiles|
-            update_requred, err = Torigoya::Package::Recoder.save_available_packages_table(C.apt_repository_path, package_profiles)
-            next "", err if !err.nil? || update_requred == false
-
-            message, err = Torigoya::Package::Recoder.add_to_apt_repository(C.apt_repository_path, placeholder_path, package_profiles)
-            next message, err
-          end
-
-          #
-          if err.nil?
-            out.write "succees: #{message}"
-          else
-            out.write "failed: #{err}"
-          end
-
-        rescue => e
-          return exception_raised(e)
-        end
+      #
+      if err.nil?
+        @body = "succees: #{message}"
+      else
+        @body = "failed: #{err}"
       end
+      erb 'register_to_repository.html'.to_sym
 
     rescue => e
       return exception_raised(e)
@@ -493,8 +389,12 @@ end
 # ==================================================
 
 get "/webhooks" do
-  @hooks = WebHook.all
-  erb 'webhooks.html'.to_sym
+  if login?
+    @hooks = WebHook.all
+    erb 'webhooks.html'.to_sym
+  else
+    return unauthed_error()
+  end
 end
 
 post "/webhooks/append" do
@@ -588,8 +488,27 @@ post "/webhook/:target" do
     log = Log.new(title: "webhook: #{target}", content: "#{payload.to_s}", status: 0)
     log.save!
 
-    install(hook.script, false)
+    #
+    status = install(hook.script, false)
+    status.join
 
+    #
+    message, err = register_to_repository()
+    unless err.nil?
+      return 400
+    end
+
+    r, is_error = update_nodes_proc_table_with_error_handling()
+    if is_error
+      return 400
+    end
+
+    r, is_error = update_nodes_packages_with_error_handling()
+    if is_error
+      return 400
+    end
+
+    #
     return 200
 
   rescue => e

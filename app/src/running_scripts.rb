@@ -152,3 +152,154 @@ def stream_status(status)
 ensure
   status.cleanup_if_unused
 end
+
+
+##
+def register_to_repository()
+  builder = Torigoya::BuildServer::Builder.new(C)
+
+  #
+  message, err = builder.save_packages do |placeholder_path, package_profiles|
+    update_requred, err = Torigoya::Package::Recoder.save_available_packages_table(C.apt_repository_path, package_profiles)
+    next "", err if !err.nil? || update_requred == false
+
+    message, err = Torigoya::Package::Recoder.add_to_apt_repository(C.apt_repository_path, placeholder_path, package_profiles)
+    next message, err
+  end
+
+  if err.nil?
+    l = Log.new(title: "register_to_repository: success",
+                content: message,
+                status: 0,
+                )
+    l.save!
+  else
+    l = Log.new(title: "register_to_repository: failed",
+                content: err.to_s,
+                status: -1,
+                )
+    l.save!
+  end
+
+  return [message, err]
+end
+
+
+##
+def update_nodes_proc_table_with_error_handling()
+  results = update_nodes_proc_table()
+  title, status, is_error = if results.any? {|r| r[:is_error] == true}
+                              ["there are any error", -1, true]
+                            else
+                              ["success", 0, false]
+                            end
+
+  log = Log.new(title: "update proc_table: #{title}",
+                content: results.to_s,
+                status: status
+                )
+  log.save!
+
+  return results, is_error
+end
+
+def update_nodes_proc_table()
+  m = NodeApiAddress.find(1)
+  address = m.address
+
+  response = JSON.parse(Net::HTTP.get(URI.parse(address)))
+  raise "is_error != false" if response["is_error"] != false
+
+  results = []
+
+  q = Queue.new()
+  response["nodes"].each{|n| q.push(n)}
+  exec_in_workers(q) do |n|
+    r = {
+      address: n["addr"],
+      port: n["port"],
+    }
+
+    begin
+      s = TorigoyaKit::Session.new(n["addr"], n["port"])
+      s.update_proc_table()
+
+      r[:is_error] = false
+      results << r
+
+    rescue => e
+      r[:is_error] = true
+      results << r
+    end
+  end # exec_in_workers do
+
+  return results
+end
+
+
+##
+def update_nodes_packages_with_error_handling()
+  results = update_nodes_packages()
+  title, status, is_error = if results.any? {|r| r[:is_error] == true}
+                              ["there are any error", -1, true]
+                            else
+                              ["success", 0, false]
+                            end
+
+  log = Log.new(title: "update packages: #{title}",
+                content: results.to_s,
+                status: status
+                )
+  log.save!
+
+  return results, is_error
+end
+
+def update_nodes_packages()
+  m = NodeApiAddress.find(1)
+  address = m.address
+
+  response = JSON.parse(Net::HTTP.get(URI.parse(address)))
+  raise "is_error != false" if response["is_error"] != false
+
+  results = []
+
+  q = Queue.new()
+  response["nodes"].each{|n| q.push(n)}
+  exec_in_workers(q) do |n|
+    r = {
+      address: n["addr"],
+      port: n["port"],
+    }
+
+    begin
+      s = TorigoyaKit::Session.new(n["addr"], n["port"])
+      s.update_packages()
+
+      r[:is_error] = false
+      results << r
+
+    rescue => e
+      r[:is_error] = true
+      results << r
+    end
+  end # exec_in_workers do
+
+  return results
+end
+
+
+##
+def exec_in_workers(queue, &block)
+  workers = (0...4).map do
+    Thread.new do
+      begin
+        while n = queue.pop(true)
+          block.call(n)
+        end
+      rescue ThreadError
+      end
+    end
+  end
+  workers.map(&:join)
+end

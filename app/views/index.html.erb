@@ -17,8 +17,14 @@
     <% end %>
 </ui>
 
-<h1>nodes</h1>
-<a href="/deliver_messages">messages</a>
+<h1>packages</h1>
+<a href="/packages">packages</a>
+
+<h1>register_to_repository</h1>
+<a href="/register_to_repository">register_to_repository</a>
+
+<h1>deliver messages to nodes</h1>
+<a href="/deliver_messages">nodes</a>
 
 <h1>running</h1>
 <ui>
@@ -39,12 +45,6 @@
 <h1>Logs</h1>
 <ui>
 <% @logs.each do |log| %>
-    <li><a href="/log/<%= log.id %>"><%= "#{log.title} - #{log.created_at} [#{log.status}]" %></a>(<a href="/log/delete/<%= log.id %>">D</a>)</li>
+    <li><a href="/log/<%= log.id %>"><%= "#{log.created_at} - #{log.title} [#{log.status}]" %></a>(<a href="/log/delete/<%= log.id %>">D</a>)</li>
 <% end %>
 </ui>
-
-<h1>packages</h1>
-<a href="/packages">packages</a>
-
-<h1>install</h1>
-<a href="/install">install</a>
