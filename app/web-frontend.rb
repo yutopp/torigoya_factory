@@ -5,7 +5,11 @@ require 'sinatra/reloader'
 require 'sinatra/assetpack'
 require "sinatra/activerecord"
 
+require 'net/http'
 require 'digest/sha2'
+require 'json'
+
+require 'torigoya_kit'
 
 require_relative "src/config"
 require_relative "src/builder"
@@ -25,6 +29,10 @@ end
 
 class ScheduledTask < ActiveRecord::Base
 end
+
+class NodeApiAddress < ActiveRecord::Base
+end
+
 
 #
 configure do
@@ -50,7 +58,20 @@ assets do
   css :application, ['/css/style.css']
 end
 
+
+def unauthed_error()
+  status 401
+  return "To do this action, admin privilege is required."
+end
+
+def exception_raised(e)
+  status 500
+  return "reised: #{e}"
+end
+
+# ========================================
 #
+# ========================================
 get '/' do
   @builder = Torigoya::BuildServer::Builder.new(C)
   @tasks = RunningScripts.instance.tasks
@@ -61,6 +82,166 @@ get '/' do
   erb 'index.html'.to_sym
 end
 
+
+
+# ========================================
+#
+# ========================================
+get '/deliver_messages' do
+  if login?
+    m = nil
+    begin
+      m = NodeApiAddress.find(1)
+    rescue
+      m = NodeApiAddress.new(:address => "???")
+      m.save!
+    end
+
+    @address = m.address
+    erb 'deliver_messages.html'.to_sym
+
+  else
+    return unauthed_error()
+  end
+end
+
+post '/deliver_messages' do
+  if login?
+    begin
+      address = params['address']
+      raise "address is nil" if address.nil?
+
+      m = NodeApiAddress.find(1)
+      m.address = address
+      m.save!
+
+      redirect "/deliver_messages"
+
+    rescue => e
+      "reised: #{e}"
+    end
+
+  else
+    return "To do this action, admin privilege is required."
+  end
+end
+
+
+get '/deliver_messages/update_proc_table' do
+  if login?
+    begin
+      @results = update_nodes_proc_table()
+      return @results.to_s
+
+    rescue => e
+      return exception_raised(e)
+    end
+
+  else
+    return unauthed_error()
+  end
+end
+
+
+get '/deliver_messages/update_packages' do
+  if login?
+    begin
+      @results = update_nodes_packages()
+      return @results.to_s
+
+    rescue => e
+      return exception_raised(e)
+    end
+
+  else
+    return unauthed_error()
+  end
+end
+
+
+def update_nodes_proc_table()
+  m = NodeApiAddress.find(1)
+  address = m.address
+
+  response = JSON.parse(Net::HTTP.get(URI.parse(address)))
+  raise "is_error != false" if response["is_error"] != false
+
+  results = []
+
+  q = Queue.new()
+  response["nodes"].each{|n| q.push(n)}
+  exec_in_workers(q) do |n|
+    r = {
+      address: n["addr"],
+      port: n["port"],
+    }
+
+    begin
+      s = TorigoyaKit::Session.new(n["addr"], n["port"])
+      s.update_proc_table()
+
+      r[:is_error] = false
+      results << r
+
+    rescue => e
+      r[:is_error] = true
+      results << r
+    end
+  end # exec_in_workers do
+
+  return results
+end
+
+def update_nodes_packages()
+  m = NodeApiAddress.find(1)
+  address = m.address
+
+  response = JSON.parse(Net::HTTP.get(URI.parse(address)))
+  raise "is_error != false" if response["is_error"] != false
+
+  results = []
+
+  q = Queue.new()
+  response["nodes"].each{|n| q.push(n)}
+  exec_in_workers(q) do |n|
+    r = {
+      address: n["addr"],
+      port: n["port"],
+    }
+
+    begin
+      s = TorigoyaKit::Session.new(n["addr"], n["port"])
+      s.update_packages()
+
+      r[:is_error] = false
+      results << r
+
+    rescue => e
+      r[:is_error] = true
+      results << r
+    end
+  end # exec_in_workers do
+
+  return results
+end
+
+def exec_in_workers(queue, &block)
+  workers = (0...4).map do
+    Thread.new do
+      begin
+        while n = queue.pop(true)
+          block.call(n)
+        end
+      rescue ThreadError
+      end
+    end
+  end
+  workers.map(&:join)
+end
+
+# ========================================
+#
+# ========================================
 get '/pull_package_list' do
   builder = Torigoya::BuildServer::Builder.new(C)
   succeeded, message = builder.pull_package_list
@@ -71,6 +252,11 @@ get '/pull_package_list' do
   end
 end
 
+
+
+# ========================================
+#
+# ========================================
 get '/login' do
   erb 'login.html'.to_sym
 end
@@ -88,6 +274,12 @@ post "/login" do
   end
 end
 
+
+
+# ========================================
+#
+# ========================================
+#
 get "/logout" do
   session[:is_logged_in] = false
   redirect '/'
@@ -95,9 +287,9 @@ end
 
 
 
-
-
-
+# ========================================
+#
+# ========================================
 #
 get '/packaging_and_install/:name' do
   if login?
@@ -134,6 +326,11 @@ get '/packaging_and_install/:name/reuse' do
   end
 end
 
+
+
+# ========================================
+#
+# ========================================
 #
 get '/status/:index' do
   begin
@@ -147,6 +344,11 @@ get '/status/:index' do
   end
 end
 
+
+
+# ========================================
+#
+# ========================================
 #
 get '/temp' do
   builder = Torigoya::BuildServer::Builder.new(C)
@@ -162,6 +364,7 @@ get '/temp' do
   erb 'temp.html'.to_sym
 end
 
+#
 get '/temp/delete/:name' do
   if login?
     builder = Torigoya::BuildServer::Builder.new(C)
@@ -179,6 +382,10 @@ get '/temp/delete/:name' do
   end
 end
 
+
+
+# ========================================
+#
 # ========================================
 get '/packages' do
   @registered_packages, @err = Torigoya::Package::Recoder.packages_list(C.apt_repository_path)
@@ -207,24 +414,35 @@ get '/packages/delete/:name' do
 end
 
 
+
+# ========================================
+#
+# ========================================
 get '/install' do
   if login?
     begin
       stream do |out|
-        builder = Torigoya::BuildServer::Builder.new(C)
+        begin
+          builder = Torigoya::BuildServer::Builder.new(C)
 
-        #
-        message, err = builder.save_packages do |placeholder_path, package_profiles|
-          update_requred, err = Torigoya::Package::Recoder.save_available_packages_table(C.apt_repository_path, package_profiles)
-          next "", err if !err.nil? || update_requred == false
+          #
+          message, err = builder.save_packages do |placeholder_path, package_profiles|
+            update_requred, err = Torigoya::Package::Recoder.save_available_packages_table(C.apt_repository_path, package_profiles)
+            next "", err if !err.nil? || update_requred == false
 
-          message, err = Torigoya::Package::Recoder.add_to_apt_repository(C.apt_repository_path, placeholder_path, package_profiles)
-          next message, err
-        end
-        if err.nil?
-          out.write "succees: #{message}"
-        else
-          out.write "failed: #{err}"
+            message, err = Torigoya::Package::Recoder.add_to_apt_repository(C.apt_repository_path, placeholder_path, package_profiles)
+            next message, err
+          end
+
+          #
+          if err.nil?
+            out.write "succees: #{message}"
+          else
+            out.write "failed: #{err}"
+          end
+
+        rescue => e
+          puts "exception: #{e} / #{e.backtrace}"
         end
       end
 
@@ -236,6 +454,7 @@ get '/install' do
     return "To do this action, admin privilege is required."
   end
 end
+
 
 
 # ==================================================
@@ -348,5 +567,23 @@ post "/webhook/:target" do
       puts "> #{t}"
     end
     return 400
+  end
+end
+
+
+
+# ========================================
+#
+# ========================================
+get "/log/:id" do
+  begin
+    id = params['id']
+    raise "id is nil" if id.nil?
+    @log = Log.find(id.to_i)
+
+    erb 'log.html'.to_sym
+
+  rescue => e
+    exception_raised(e)
   end
 end
