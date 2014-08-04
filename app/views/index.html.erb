@@ -17,6 +17,9 @@
     <% end %>
 </ui>
 
+<h1>nodes</h1>
+<a href="/deliver_messages">messages</a>
+
 <h1>running</h1>
 <ui>
 <% @tasks.each_with_index do |status, index| %>
@@ -36,7 +39,7 @@
 <h1>Logs</h1>
 <ui>
 <% @logs.each do |log| %>
-    <li><%= "#{log.title} - #{log.created_at}" %></li>
+    <li><a href="/log/<%= log.id %>"><%= "#{log.title} - #{log.created_at}" %></a></li>
 <% end %>
 </ui>
 
