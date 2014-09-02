@@ -41,9 +41,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                                           "apt-get install -y libreadline6 libreadline6-dev",
                                           "gem install thin bundler fpm --no-rdoc --no-ri",
                                           "if [ ! -e /usr/local/torigoya ]; then mkdir /usr/local/torigoya; fi",
-                                          "cp /vagrant/nginx.conf /etc/nginx/nginx.conf",
+                                          "cp /vagrant/nginx.vagrant.conf /etc/nginx/nginx.conf",
                                           "cd /vagrant/app; bundle install",
                                           "cd /vagrant/app; bundle exec rake db:migrate",
-                                          "nginx &"
+                                          "sudo kill -9 `sudo lsof -i:80 -t`",
+                                          "service nginx start"
                                          ].join("; ")
 end
