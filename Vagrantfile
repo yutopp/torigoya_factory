@@ -16,6 +16,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network "forwarded_port", guest: 80, host: 50080, auto_correct: true
   config.vm.network "forwarded_port", guest: 8080, host: 58080, auto_correct: true
 
+  # for development
+  config.vm.network "private_network", ip: "192.168.33.10", virtualbox__intnet: "torigoya_dev"
+
+
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--memory", 1024]
     # http://stackoverflow.com/questions/22901859/cannot-make-outbound-http-requests-from-vagrant-vm
@@ -27,13 +31,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   #
   config.vm.provision :shell, :inline => ["apt-get -y update && apt-get -y upgrade",
-                                          "apt-get install -y nginx libsqlite3-dev",
-                                          "apt-get install -y reprepro",
+                                          "apt-get install -y nginx reprepro",
                                           "apt-get install -y build-essential",
                                           "apt-get install -y ruby ruby-dev",
-                                          "apt-get install -y git wget unzip python",
-                                          "apt-get install -y cmake subversion clang",
+                                          "apt-get install -y libsqlite3-dev",
+                                          "apt-get install -y cmake subversion clang wget zip unzip perl python autoconf",
+                                          "apt-get install -y git groff",
+                                          "apt-get install -y diffutils texinfo flex guile-2.0-dev autogen tcl expect dejagnu gperf gettext automake m4",
+                                          "apt-get install -y libreadline6 libreadline6-dev",
                                           "gem install thin bundler fpm --no-rdoc --no-ri",
                                           "if [ ! -e /usr/local/torigoya ]; then mkdir /usr/local/torigoya; fi",
+                                          "cp /vagrant/nginx.conf /etc/nginx/nginx.conf",
+                                          "cd /vagrant/app; bundle install",
+                                          "cd /vagrant/app; bundle exec rake db:migrate",
+                                          "nginx &"
                                          ].join("; ")
 end
