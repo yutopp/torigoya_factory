@@ -16,3 +16,5 @@ gem 'twitter'
 gem 'torigoya_kit'
 
 gem 'rake'
+
+gem 'fpm'

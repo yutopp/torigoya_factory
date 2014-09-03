@@ -60,6 +60,10 @@ assets do
   css :application, ['/css/style.css']
 end
 
+after do
+  ActiveRecord::Base.connection.close
+end
+
 
 def unauthed_error()
   status 401

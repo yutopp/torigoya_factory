@@ -39,6 +39,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                                           "apt-get install -y git groff",
                                           "apt-get install -y diffutils texinfo flex guile-2.0-dev autogen tcl expect dejagnu gperf gettext automake m4",
                                           "apt-get install -y libreadline6 libreadline6-dev",
+                                          "apt-get install -y gauche",
+                                          "apt-get install -y bison",
                                           "gem install thin bundler fpm --no-rdoc --no-ri",
                                           "if [ ! -e /usr/local/torigoya ]; then mkdir /usr/local/torigoya; fi",
                                           "cp /vagrant/nginx.vagrant.conf /etc/nginx/nginx.conf",
