@@ -9,3 +9,5 @@ placeholder/*
 *.sh
 
 torigoya_*
+
+app/db/migrate/schema.rb

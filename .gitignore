@@ -12,3 +12,5 @@ packages_shadow/
 torigoya_package_scripts
 
 database/torigoya_factory.db
+
+app/db/migrate/schema.rb

@@ -23,10 +23,8 @@ ADD nginx.conf /etc/nginx/nginx.conf
 ADD app /etc/app
 ADD config.in_docker.yml /etc/app/config.yml
 RUN cd /etc/app; bundle update
-VOLUME ["/etc/database"]
-RUN cd /etc/app; rake db:migrate
 
 EXPOSE 80
 EXPOSE 8080
 
-CMD nginx && cd /etc/app && ruby web-frontend.rb
+CMD nginx && cd /etc/app && bundle exec rake db:migrate && bundle exec ruby web-frontend.rb

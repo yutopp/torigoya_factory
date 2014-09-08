@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-sudo docker build -t torigoya/factory .
+sudo docker build "$@" -t torigoya/factory .
