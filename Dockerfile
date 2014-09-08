@@ -10,9 +10,10 @@ build-essential \
 ruby ruby-dev \
 libsqlite3-dev \
 cmake subversion clang wget zip unzip perl python autoconf \
-git groff \
+git groff mercurial \
 diffutils texinfo flex guile-2.0-dev autogen tcl expect dejagnu gperf gettext automake m4 \
-libreadline6 libreadline6-dev
+libreadline6 libreadline6-dev \
+gauche bison
 
 RUN cd /etc; git clone https://github.com/yutopp/torigoya_package_scripts.git package_scripts
 
