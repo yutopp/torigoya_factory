@@ -19,6 +19,7 @@ sudo docker run \
     -v $APT_REPOSITORY_PATH:/etc/apt_repository \
     -v $PACKAGES_PATH:/usr/local/torigoya \
     -v $cwd/placeholder:/etc/placeholder \
+    -v $cwd/database:/etc/database \
     --name torigoya_factory \
     --detach=true \
     torigoya/factory

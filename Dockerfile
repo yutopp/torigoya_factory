@@ -23,6 +23,7 @@ ADD nginx.conf /etc/nginx/nginx.conf
 ADD app /etc/app
 ADD config.in_docker.yml /etc/app/config.yml
 RUN cd /etc/app; bundle update
+VOLUME ["/etc/database"]
 RUN cd /etc/app; rake db:migrate
 
 EXPOSE 80

@@ -10,3 +10,5 @@ packages_shadow/
 
 .vagrant
 torigoya_package_scripts
+
+database/torigoya_factory.db

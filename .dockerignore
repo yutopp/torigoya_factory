@@ -1,11 +1,10 @@
-.git
+.git/*
 .gitignore
 
 Vagrantfile
-app/
-apt_repository/
-packages_shadow/
-placeholder/
+apt_repository/*
+packages_shadow/*
+placeholder/*
 
 *.sh
 
