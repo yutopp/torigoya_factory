@@ -99,6 +99,16 @@ class TaskQueue
           #
           @m.synchronize do
             @tasks = @tasks.drop(1)
+
+            if @tasks.size == 0
+              message, err = register_to_repository()
+              if err.nil?
+                r, is_error = update_nodes_proc_table_with_error_handling()
+                unless is_error
+                  r, is_error = update_nodes_packages_with_error_handling()
+                end
+              end
+            end
           end
 
           rescue => e

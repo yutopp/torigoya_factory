@@ -570,26 +570,8 @@ post "/webhook/:target" do
     end
 
     #
-    status = install(hook.script, false)
-    status.join
+    add_to_install_task(hook.script, false)
 
-    #
-    message, err = register_to_repository()
-    unless err.nil?
-      return 400
-    end
-
-    r, is_error = update_nodes_proc_table_with_error_handling()
-    if is_error
-      return 400
-    end
-
-    r, is_error = update_nodes_packages_with_error_handling()
-    if is_error
-      return 400
-    end
-
-    #
     return 200
 
   rescue => e
