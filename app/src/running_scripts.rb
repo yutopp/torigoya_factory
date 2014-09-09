@@ -105,12 +105,16 @@ def install(name, do_reuse = false)
       log_id = nil
       begin
         # client.update("failed #{name} @yutopp") unless updated
-        log = Log.new(title: "packaging: #{status.name}",
-                      content: status.logs.map{|l| l.class.to_s + " : " + l.line}.join(''),
-                      status: if updated then 0 else -1 end
-                      )
-        log.save!
-        log_id = log.id
+        ActiveRecord::Base.connection_pool.with_connection do
+          log = Log.new(title: "packaging: #{status.name}",
+                        content: status.logs.map{|l| l.class.to_s + " : " + l.line}.join(''),
+                        status: if updated then 0 else -1 end
+                        )
+          log.save!
+
+          log_id = log.id
+        end
+
       rescue => e
         # ...
       end
@@ -167,18 +171,21 @@ def register_to_repository()
     next message, err
   end
 
-  if err.nil?
-    l = Log.new(title: "register_to_repository: success",
-                content: message,
-                status: 0,
-                )
-    l.save!
-  else
-    l = Log.new(title: "register_to_repository: failed",
-                content: err.to_s,
-                status: -1,
-                )
-    l.save!
+  ActiveRecord::Base.connection_pool.with_connection do
+    if err.nil?
+      l = Log.new(title: "register_to_repository: success",
+                  content: message,
+                  status: 0,
+                  )
+      l.save!
+
+    else
+      l = Log.new(title: "register_to_repository: failed",
+                  content: err.to_s,
+                  status: -1,
+                  )
+      l.save!
+    end
   end
 
   return [message, err]
@@ -194,15 +201,19 @@ def update_nodes_proc_table_with_error_handling()
                               ["success", 0, false]
                             end
 
-  log = Log.new(title: "update proc_table: #{title}",
-                content: results.to_s,
-                status: status
-                )
-  log.save!
+  ActiveRecord::Base.connection_pool.with_connection do
+    log = Log.new(title: "update proc_table: #{title}",
+                  content: results.to_s,
+                  status: status
+                  )
+    log.save!
+  end
 
   return results, is_error
 end
 
+
+##
 def update_nodes_proc_table()
   m = NodeApiAddress.find(1)
   address = m.address
@@ -246,11 +257,13 @@ def update_nodes_packages_with_error_handling()
                               ["success", 0, false]
                             end
 
-  log = Log.new(title: "update packages: #{title}",
-                content: results.to_s,
-                status: status
-                )
-  log.save!
+  ActiveRecord::Base.connection_pool.with_connection do
+    log = Log.new(title: "update packages: #{title}",
+                  content: results.to_s,
+                  status: status
+                  )
+    log.save!
+  end
 
   return results, is_error
 end

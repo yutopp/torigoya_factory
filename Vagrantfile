@@ -45,6 +45,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                                           "if [ ! -e /usr/local/torigoya ]; then mkdir /usr/local/torigoya; fi",
                                           "cp /vagrant/nginx.vagrant.conf /etc/nginx/nginx.conf",
                                           "cd /vagrant/app; bundle install",
+                                          "cd /vagrant/app; bundle exec rake db:create",
                                           "cd /vagrant/app; bundle exec rake db:migrate",
                                           "sudo kill -9 `sudo lsof -i:80 -t`",
                                           "service nginx start"

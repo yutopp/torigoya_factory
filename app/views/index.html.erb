@@ -17,16 +17,16 @@
     <% end %>
 </ui>
 
-<h1>packages</h1>
+<h1>Packages</h1>
 <a href="/packages">packages</a>
 
-<h1>register_to_repository</h1>
+<h1>Register packages to the repository</h1>
 <a href="/register_to_repository">register_to_repository</a>
 
-<h1>deliver messages to nodes</h1>
+<h1>Deliver messages to nodes</h1>
 <a href="/deliver_messages">nodes</a>
 
-<h1>running</h1>
+<h1>Tasks</h1>
 <ui>
 <% @tasks.each_with_index do |status, index| %>
     <li>
@@ -36,15 +36,11 @@
 <% end %>
 </ui>
 
-<h1>temporaries</h1>
+<h1>Temporary packages</h1>
 <a href="/temp">tmps</a>
 
 <h1>Webhooks</h1>
 <a href="/webhooks">webhook</a>
 
 <h1>Logs</h1>
-<ui>
-<% @logs.each do |log| %>
-    <li><a href="/log/<%= log.id %>"><%= "#{log.created_at} - #{log.title} [#{log.status}]" %></a>(<a href="/log/delete/<%= log.id %>">D</a>)</li>
-<% end %>
-</ui>
+<a href="/logs">logs</a>

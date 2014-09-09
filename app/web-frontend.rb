@@ -73,8 +73,10 @@ end
 def exception_raised(e)
   begin
     content = e.backtrace.join("\n")
-    log = Log.new(title: "exception: #{e}", content: content, status: -1)
-    log.save!
+    ActiveRecord::Base.connection_pool.with_connection do
+      log = Log.new(title: "exception: #{e}", content: content, status: -1)
+      log.save!
+    end
 
   rescue => e
     # ...
@@ -92,11 +94,19 @@ get '/' do
   @tasks = RunningScripts.instance.tasks
   @is_logged_in = login?
   @is_nopass_mode = C.admin_pass_sha512.nil?
-  @logs = Log.all.order('created_at DESC')
 
   erb 'index.html'.to_sym
 end
 
+
+# ========================================
+#
+# ========================================
+get '/logs' do
+  @logs = Log.all.order('created_at DESC')
+
+  erb 'logs.html'.to_sym
+end
 
 
 # ========================================
@@ -105,11 +115,13 @@ end
 get '/deliver_messages' do
   if login?
     m = nil
-    begin
-      m = NodeApiAddress.find(1)
-    rescue
-      m = NodeApiAddress.new(:address => "???")
-      m.save!
+    ActiveRecord::Base.connection_pool.with_connection do
+      begin
+        m = NodeApiAddress.find(1)
+      rescue
+        m = NodeApiAddress.new(:address => "???")
+        m.save!
+      end
     end
 
     @address = m.address
@@ -126,9 +138,11 @@ post '/deliver_messages' do
       address = params['address']
       raise "address is nil" if address.nil?
 
-      m = NodeApiAddress.find(1)
-      m.address = address
-      m.save!
+      ActiveRecord::Base.connection_pool.with_connection do
+        m = NodeApiAddress.find(1)
+        m.address = address
+        m.save!
+      end
 
       redirect "/deliver_messages"
 
@@ -411,8 +425,10 @@ post "/webhooks/append" do
       raise "secret is nil" if secret.nil?
       raise "script is nil" if script.nil?
 
-      hook = WebHook.new(target: target, secret: secret, script: script)
-      hook.save!
+      ActiveRecord::Base.connection_pool.with_connection do
+        hook = WebHook.new(target: target, secret: secret, script: script)
+        hook.save!
+      end
 
       redirect "/webhooks"
 
@@ -437,11 +453,13 @@ post "/webhooks/update/:id" do
       raise "secret is nil" if secret.nil?
       raise "script is nil" if script.nil?
 
-      hook = WebHook.find(id.to_i)
-      hook.target = target
-      hook.secret = secret
-      hook.script = script
-      hook.save!
+      ActiveRecord::Base.connection_pool.with_connection do
+        hook = WebHook.find(id.to_i)
+        hook.target = target
+        hook.secret = secret
+        hook.script = script
+        hook.save!
+      end
 
       redirect "/webhooks"
 
@@ -483,14 +501,18 @@ post "/webhook/:target" do
 
     github_sig = request.env['HTTP_X_HUB_SIGNATURE']
 
-    hook = WebHook.find_by_target(target)
+    ActiveRecord::Base.connection_pool.with_connection do
+      hook = WebHook.find_by_target(target)
+    end
 
     expected_sig = 'sha1='+OpenSSL::HMAC.hexdigest(HMAC_DIGEST, hook.secret, body)
     raise "invalid signature" if github_sig != expected_sig
 
-    payload = JSON.parse(body)
-    log = Log.new(title: "webhook: #{target}", content: "#{payload.to_s}", status: 0)
-    log.save!
+    ActiveRecord::Base.connection_pool.with_connection do
+      payload = JSON.parse(body)
+      log = Log.new(title: "webhook: #{target}", content: "#{payload.to_s}", status: 0)
+      log.save!
+    end
 
     #
     status = install(hook.script, false)

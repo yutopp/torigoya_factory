@@ -5,7 +5,8 @@ apt_repository/*
 !apt_repository/conf
 !apt_repository/conf/distributions
 
-placeholder/
+placeholder/*
+!placeholder/.empty
 packages_shadow/
 
 .vagrant
@@ -13,4 +14,4 @@ torigoya_package_scripts
 
 database/torigoya_factory.db
 
-app/db/migrate/schema.rb
+app/db/schema.rb
