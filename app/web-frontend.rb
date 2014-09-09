@@ -65,6 +65,7 @@ assets do
 
   serve '/js', :from => 'js'
   js :application, [
+                    '/js/jquery-2.1.1.min.js',
                     '/js/bootstrap.min.js'
                    ]
 
