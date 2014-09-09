@@ -106,8 +106,6 @@ end
 get '/' do
   @builder = Torigoya::BuildServer::Builder.new(C)
   @tasks = RunningScripts.instance.tasks
-  @is_logged_in = login?
-  @is_nopass_mode = C.admin_pass_sha512.nil?
   @tasks_queue = get_install_tasks_queue()
 
   erb 'index.html'.to_sym

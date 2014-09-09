@@ -26,14 +26,16 @@
                         <li class="active"><a href="/">Top</a></li>
                     </ul>
                     <ul class="nav navbar-nav pull-right">
-                        <% if @is_logged_in == true %>
-                            <p class="navbar-text">LOGGED IN</p>
-                            <li class="active"><a href="/logout">logout</a></li>
-                        <% else %>
-                            <li class="active"><a href="/login">login</a></li>
-                        <% end %>
-                        <% if @is_nopass_mode == true %>
+
+                        <% if C.admin_pass_sha512.nil? == true %>
                             <p class="navbar-text">NO PASS MODE</p>
+                        <% else %>
+                            <% if login? == true %>
+                                <p class="navbar-text">LOGGED IN</p>
+                                <li class="active"><a href="/logout">logout</a></li>
+                            <% else %>
+                                <li class="active"><a href="/login">login</a></li>
+                            <% end %>
                         <% end %>
                     </ul>
                 </div><!--/.nav-collapse -->
