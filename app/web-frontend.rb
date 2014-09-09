@@ -57,7 +57,18 @@ end
 register Sinatra::AssetPack
 assets do
   serve '/css', :from => 'css'
-  css :application, ['/css/style.css']
+  css :application, [
+                     '/css/style.css',
+                     '/css/bootstrap.min.css',
+                     '/css/bootstrap-theme.min.css'
+                    ]
+
+  serve '/js', :from => 'js'
+  js :application, [
+                    '/js/bootstrap.min.js'
+                   ]
+
+  serve '/fonts', :from => 'fonts'
 end
 
 after do

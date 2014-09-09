@@ -1,46 +1,48 @@
-<% if @is_logged_in == true %>
-    LOGGED IN <a href="/logout">logout</a><br>
-<% else %>
-    <a href="/login">login</a>
-<% end %>
-<% if @is_nopass_mode == true %>
-    <strong>NO PASS MODE</strong><br>
-<% end %>
+<div class="row">
+  <div class="col-md-4">
+      <h1>Installers</h1>
+      <%= @builder.platform_package_script_dir() %><br>
+      <%= @builder.package_list_revision %>
+      <a href="/pull_package_list">git pull origin master</a>
+      <ui>
+          <% @builder.installers.each do |name| %>
+              <li><a href="packaging_and_install/<%= name %>"><%= name %></a>(<a href="packaging_and_install/<%= name %>/reuse">reuse</a>)</li>
+          <% end %>
+      </ui>
+  </div>
 
-<h1>Installers</h1>
-<%= @builder.platform_package_script_dir() %><br>
-<%= @builder.package_list_revision %>
-<a href="/pull_package_list">git pull origin master</a>
-<ui>
-    <% @builder.installers.each do |name| %>
-        <li><a href="packaging_and_install/<%= name %>"><%= name %></a>(<a href="packaging_and_install/<%= name %>/reuse">reuse</a>)</li>
-    <% end %>
-</ui>
+  <div class="col-md-3">
+      <h1>Queue</h1>
+  </div>
 
-<h1>Packages</h1>
-<a href="/packages">packages</a>
+  <div class="col-md-5">
+      <h1>Packages</h1>
+      <a href="/packages">packages</a>
 
-<h1>Register packages to the repository</h1>
-<a href="/register_to_repository">register_to_repository</a>
+      <h1>Register packages to the repository</h1>
+      <a href="/register_to_repository">register_to_repository</a>
 
-<h1>Deliver messages to nodes</h1>
-<a href="/deliver_messages">nodes</a>
+      <h1>Deliver messages to nodes</h1>
+      <a href="/deliver_messages">nodes</a>
 
-<h1>Tasks</h1>
-<ui>
-<% @tasks.each_with_index do |status, index| %>
-    <li>
-        <%= status.is_active ? "(active)" : "(finished)" %>
-        <%= status.is_updated ? "(updated)" : "(NOT updated)" %>
-        <a href="status/<%= index %>"><%= status.name %></a></li>
-<% end %>
-</ui>
+      <h1>Tasks</h1>
+      <ui>
+          <% @tasks.each_with_index do |status, index| %>
+              <li>
+                  <%= status.is_active ? "(active)" : "(finished)" %>
+                  <%= status.is_updated ? "(updated)" : "(NOT updated)" %>
+                  <a href="status/<%= index %>"><%= status.name %></a></li>
+          <% end %>
+      </ui>
 
-<h1>Temporary packages</h1>
-<a href="/temp">tmps</a>
+      <h1>Temporary packages</h1>
+      <a href="/temp">tmps</a>
 
-<h1>Webhooks</h1>
-<a href="/webhooks">webhook</a>
+      <h1>Webhooks</h1>
+      <a href="/webhooks">webhook</a>
 
-<h1>Logs</h1>
-<a href="/logs">logs</a>
+      <h1>Logs</h1>
+      <a href="/logs">logs</a>
+  </div>
+
+</div>

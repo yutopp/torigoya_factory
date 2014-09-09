@@ -1,19 +1,24 @@
-<a href="/">Top</a>
+<h1>Webhooks</h1>
 
 <% @hooks.each do |hook| %>
-    <div>
-        <form action="/webhooks/update/<%= hook.id%>" method="post">
-            <label for="target">:target</label>
-            <input type="text" name="target" value="<%= hook.target %>">
-            <label for="secret">:secret</label>
-            <input type="text" name="secret" value="<%= hook.secret %>">
-            <label for="script">script_name</label>
-            <input type="text" name="script" value="<%= hook.script %>">
-            <input type="submit" value="Update">
-        </form>
-        <form action="/webhooks/delete/<%= hook.id%>" method="post">
-            <input type="submit" value="Delete">
-        </form>
+    <div class="row">
+        <div class="col-md-10">
+            <form action="/webhooks/update/<%= hook.id%>" method="post">
+                <label for="target">:target</label>
+                <input type="text" name="target" value="<%= hook.target %>">
+                <label for="secret">:secret</label>
+                <input type="text" name="secret" value="<%= hook.secret %>">
+                <label for="script">script_name</label>
+                <input type="text" name="script" value="<%= hook.script %>">
+                <input type="submit" value="Update">
+            </form>
+        </div>
+
+        <div class="col-md-2">
+            <form action="/webhooks/delete/<%= hook.id%>" method="post">
+                <input type="submit" value="Delete">
+            </form>
+        </div>
     </div>
 <% end %>
 
