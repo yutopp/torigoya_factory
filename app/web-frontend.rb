@@ -105,6 +105,7 @@ get '/' do
   @tasks = RunningScripts.instance.tasks
   @is_logged_in = login?
   @is_nopass_mode = C.admin_pass_sha512.nil?
+  @tasks_queue = get_install_tasks_queue()
 
   erb 'index.html'.to_sym
 end
@@ -114,7 +115,9 @@ end
 #
 # ========================================
 get '/logs' do
-  @logs = Log.all.order('created_at DESC')
+  ActiveRecord::Base.connection_pool.with_connection do
+    @logs = Log.all.order('created_at DESC')
+  end
 
   erb 'logs.html'.to_sym
 end
@@ -286,6 +289,45 @@ get '/packaging_and_install/:name/reuse' do
   end
 end
 
+
+# ========================================
+#
+# ========================================
+#
+get '/packaging_and_install_lazy/:name' do
+  if login?
+    begin
+      name = params['name']
+      add_to_install_task(name, false)
+
+      redirect '/'
+
+    rescue => e
+      return exception_raised(e)
+    end
+
+  else
+    return unauthed_error()
+  end
+end
+
+#
+get '/packaging_and_install_lazy/:name/reuse' do
+  if login?
+    begin
+      name = params['name']
+      add_to_install_task(name, true)
+
+      redirect '/'
+
+    rescue => e
+      return exception_raised(e)
+    end
+
+  else
+    return unauthed_error()
+  end
+end
 
 
 # ========================================
@@ -489,8 +531,10 @@ post "/webhooks/delete/:id" do
       id = params['id']
       raise "id is nil" if id.nil?
 
-      hook = WebHook.find(id.to_i)
-      hook.destroy!
+      ActiveRecord::Base.connection_pool.with_connection do
+        hook = WebHook.find(id.to_i)
+        hook.destroy!
+      end
 
       redirect "/webhooks"
 
@@ -563,7 +607,9 @@ get "/log/:id" do
     begin
       id = params['id']
       raise "id is nil" if id.nil?
-      @log = Log.find(id.to_i)
+      ActiveRecord::Base.connection_pool.with_connection do
+        @log = Log.find(id.to_i)
+      end
 
       erb 'log.html'.to_sym
 
@@ -582,7 +628,9 @@ get "/log/delete/:id" do
       id = params['id']
       raise "id is nil" if id.nil?
 
-      Log.find(id.to_i).destroy!
+      ActiveRecord::Base.connection_pool.with_connection do
+        Log.find(id.to_i).destroy!
+      end
 
       redirect '/'
 

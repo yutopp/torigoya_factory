@@ -80,6 +80,67 @@ end
 
 
 ##
+class TaskQueue
+  include Singleton
+
+  #
+  def initialize()
+    @queue = Queue.new
+    @tasks = []
+
+    @m = Mutex.new
+
+    @th = Thread.new do
+      while td = @queue.pop
+        begin
+          status = install(td.name, td.do_reuse)
+          status.join
+
+          #
+          @m.synchronize do
+            @tasks = @tasks.drop(1)
+          end
+
+          rescue => e
+        end
+      end
+    end
+  end
+  attr_reader :tasks
+
+  def add_task(name, do_reuse)
+    td = TaskDetail.new(name, do_reuse)
+
+    @m.synchronize do
+      @tasks << td
+    end
+
+    @queue.push(td)
+  end
+
+  private
+  class TaskDetail
+    def initialize(name, do_reuse)
+      @name = name
+      @do_reuse = do_reuse
+    end
+    attr_reader :name, :do_reuse
+  end
+end
+
+
+##
+def add_to_install_task(name, do_reuse = false)
+  tq = TaskQueue.instance
+  tq.add_task(name, do_reuse)
+end
+
+def get_install_tasks_queue
+  tq = TaskQueue.instance
+  return tq.tasks
+end
+
+##
 def install(name, do_reuse = false)
   builder = Torigoya::BuildServer::Builder.new(C)
 
@@ -223,7 +284,7 @@ def update_nodes_proc_table()
 
   results = []
 
-  q = Queue.new()
+  q = Queue.new
   response["nodes"].each{|n| q.push(n)}
   exec_in_workers(q) do |n|
     r = {
@@ -277,7 +338,7 @@ def update_nodes_packages()
 
   results = []
 
-  q = Queue.new()
+  q = Queue.new
   response["nodes"].each{|n| q.push(n)}
   exec_in_workers(q) do |n|
     r = {

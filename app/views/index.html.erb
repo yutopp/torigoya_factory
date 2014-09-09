@@ -6,13 +6,24 @@
       <a href="/pull_package_list">git pull origin master</a>
       <ui>
           <% @builder.installers.each do |name| %>
-              <li><a href="packaging_and_install/<%= name %>"><%= name %></a>(<a href="packaging_and_install/<%= name %>/reuse">reuse</a>)</li>
+              <li><a href="packaging_and_install/<%= name %>"><%= name %></a>[<a href="packaging_and_install/<%= name %>/reuse">reuse</a>] / (<a href="packaging_and_install_lazy/<%= name %>">lazy</a> [<a href="packaging_and_install_lazy/<%= name %>/reuse">reuse</a>])</li>
           <% end %>
       </ui>
   </div>
 
   <div class="col-md-3">
       <h1>Queue</h1>
+      Number of tasks: <%= @tasks_queue.size %><br>
+      <% @tasks_queue.each_with_index do |td, index| %>
+          <li>
+              <% if index == 0 %>
+                  <strong>Running =></strong>
+              <% else %>
+                  <%= index %>.
+              <% end %>
+               <%= td.name %>
+          </li>
+      <% end %>
   </div>
 
   <div class="col-md-5">
@@ -27,11 +38,12 @@
 
       <h1>Tasks</h1>
       <ui>
-          <% @tasks.each_with_index do |status, index| %>
+          <% @tasks.reverse.each_with_index do |status, index| %>
               <li>
                   <%= status.is_active ? "(active)" : "(finished)" %>
                   <%= status.is_updated ? "(updated)" : "(NOT updated)" %>
-                  <a href="status/<%= index %>"><%= status.name %></a></li>
+                  <a href="status/<%= index %>"><%= status.name %></a>
+              </li>
           <% end %>
       </ui>
 
