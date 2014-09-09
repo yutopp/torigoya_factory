@@ -68,6 +68,8 @@ assets do
                     '/js/bootstrap.min.js'
                    ]
 
+  serve '/images', from: 'images'
+
   serve '/fonts', :from => 'fonts'
 end
 
