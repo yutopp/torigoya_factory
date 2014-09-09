@@ -80,11 +80,18 @@ module Torigoya
       end
 
       def pull_package_list
-        Dir.chdir(@config.package_scripts_path) do
-          message = `git pull origin master`
-          succeeded = $?.exitstatus == 0
+        Guard.sync do
+          Dir.chdir(@config.package_scripts_path) do
+            begin
+              message = `git pull origin master`
+              succeeded = $?.exitstatus == 0
 
-          return succeeded, message
+              return succeeded, message
+
+            rescue => e
+              return false, e.to_s
+            end
+          end
         end
       end
 
@@ -137,13 +144,15 @@ module Torigoya
         puts "= globbing #{@config.placeholder_path} ..."
 
         pkg_profiles = []
-        Dir.chdir( @config.placeholder_path ) do
-          Dir.glob( "*.deb" ) do |pkgname|
-            #system( "cp -v #{pkgname} #{@config.for_copy_nfs_mount_path}/.")
-            mtime = File::Stat.new( pkgname ).mtime
-            pkg_profiles << TorigoyaKit::Package::AvailableProfile.new( pkgname, mtime )
+        Guard.sync do
+          Dir.chdir( @config.placeholder_path ) do
+            Dir.glob( "*.deb" ) do |pkgname|
+              #system( "cp -v #{pkgname} #{@config.for_copy_nfs_mount_path}/.")
+              mtime = File::Stat.new( pkgname ).mtime
+              pkg_profiles << TorigoyaKit::Package::AvailableProfile.new( pkgname, mtime )
 
-            puts "=> #{pkgname} / #{mtime}"
+              puts "=> #{pkgname} / #{mtime}"
+            end
           end
         end
 
@@ -151,9 +160,11 @@ module Torigoya
 
         if err == nil && pkg_profiles.length > 0
           # delete temporary
-          Dir.chdir( @config.placeholder_path ) do
-            pkg_profiles.each do |pkg_profile|
-              system( "rm -vf #{pkg_profile.package_name}")
+          Guard.sync do
+            Dir.chdir( @config.placeholder_path ) do
+              pkg_profiles.each do |pkg_profile|
+                system( "rm -vf #{pkg_profile.package_name}")
+              end
             end
           end
         end
@@ -166,9 +177,11 @@ module Torigoya
       def delete_temporary_packages!
         puts "= globbing #{@config.placeholder_path} ..."
 
-        Dir.chdir( @config.placeholder_path ) do
-          Dir.glob( "*.deb" ) do |pkgname|
-            system( "rm -v #{pkgname}")
+        Guard.sync do
+          Dir.chdir( @config.placeholder_path ) do
+            Dir.glob( "*.deb" ) do |pkgname|
+              system( "rm -v #{pkgname}")
+            end
           end
         end
       end
@@ -219,7 +232,7 @@ module Torigoya
         r_err_pipe, w_err_pipe = IO.pipe
 
         pid = nil
-        @sema.synchronize do
+        Guard.sync do
           Dir.chdir( platform_package_script_dir() ) do
             # execute install script
             @config.logger.info "Execute! => #{script_name}"
@@ -250,7 +263,7 @@ module Torigoya
 
             @config.logger.info "Spawned [#{script_name}] :: #{pid}"
           end # chdir
-        end # @sema.synchronize
+        end # Guard.sync
         raise "unexpected... : pid is nil" if pid.nil?
 
         # read stdout
