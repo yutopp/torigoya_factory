@@ -42,7 +42,7 @@
               <li>
                   <%= status.is_active ? "(active)" : "(finished)" %>
                   <%= status.is_updated ? "(updated)" : "(NOT updated)" %>
-                  <a href="status/<%= index %>"><%= status.name %></a>
+                  <a href="status/<%= @tasks.length - index - 1 %>"><%= status.name %></a>
               </li>
           <% end %>
       </ui>
