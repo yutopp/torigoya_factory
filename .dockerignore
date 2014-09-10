@@ -6,6 +6,9 @@ apt_repository/*
 packages_shadow/*
 placeholder/*
 
+database/*
+tmp/*
+
 *.sh
 
 torigoya_*

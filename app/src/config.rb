@@ -45,7 +45,10 @@ module Torigoya
       def initialize
         rp = self.class.root_path()
 
-        @config = YAML.load_file(File.expand_path("config.yml", rp))
+        config_path = File.expand_path("config.yml", rp)
+        @config = YAML.load_file(config_path)
+
+        puts "Loading: #{config_path}"
 
         #
         @host                   = @config['host']

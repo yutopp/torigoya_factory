@@ -1,6 +1,6 @@
 #
 install_path: "/usr/local/torigoya"
-workspace_path: "/tmp"
+workspace_path: "/etc/tmp"
 package_scripts_path: "/etc/package_scripts"
 placeholder_path: "/etc/placeholder"
 apt_repository_path: "/etc/apt_repository"

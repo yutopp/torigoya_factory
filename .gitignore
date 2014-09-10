@@ -7,6 +7,10 @@ apt_repository/*
 
 placeholder/*
 !placeholder/.empty
+
+tmp/*
+!tmp/.empty
+
 packages_shadow/
 
 .vagrant
