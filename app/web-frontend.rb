@@ -336,25 +336,20 @@ end
 # ========================================
 #
 get '/status/:index' do
-  if login?
-    begin
-      index = params['index'].to_i
-      status = RunningScripts.instance.task_at(index)
-      if status.is_active
-        stream_status(status)
-      else
-        id = status.log_id
-        raise "log_id is nil.." if id.nil?
+  begin
+    index = params['index'].to_i
+    status = RunningScripts.instance.task_at(index)
+    if status.is_active
+      stream_status(status)
+    else
+      id = status.log_id
+      raise "log_id is nil.." if id.nil?
 
-        redirect "/log/#{id}"
-      end
-
-    rescue => e
-      return exception_raised(e)
+      redirect "/log/#{id}"
     end
 
-  else
-    return unauthed_error()
+  rescue => e
+    return exception_raised(e)
   end
 end
 
@@ -586,22 +581,17 @@ end
 #
 # ========================================
 get "/log/:id" do
-  if login?
-    begin
-      id = params['id']
-      raise "id is nil" if id.nil?
-      ActiveRecord::Base.connection_pool.with_connection do
-        @log = Log.find(id.to_i)
-      end
-
-      erb 'log.html'.to_sym
-
-    rescue => e
-      exception_raised(e)
+  begin
+    id = params['id']
+    raise "id is nil" if id.nil?
+    ActiveRecord::Base.connection_pool.with_connection do
+      @log = Log.find(id.to_i)
     end
 
-  else
-    return unauthed_error()
+    erb 'log.html'.to_sym
+
+  rescue => e
+    exception_raised(e)
   end
 end
 
