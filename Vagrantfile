@@ -38,7 +38,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                                           "apt-get install -y cmake subversion clang wget zip unzip perl python autoconf",
                                           "apt-get install -y git groff mercurial",
                                           "apt-get install -y diffutils texinfo flex guile-2.0-dev autogen tcl expect dejagnu gperf gettext automake m4",
-                                          "apt-get install -y libreadline6 libreadline6-dev",
+                                          "apt-get install -y libreadline6 libreadline6-dev libc6-dev-i386",
                                           "apt-get install -y gauche",
                                           "apt-get install -y bison",
                                           "gem install thin bundler fpm --no-rdoc --no-ri",
