@@ -175,7 +175,6 @@ def install(name, do_reuse = false)
     ensure
       log_id = nil
       begin
-        # client.update("failed #{name} @yutopp") unless updated
         ActiveRecord::Base.connection_pool.with_connection do
           log = Log.new(title: "packaging: #{status.name}",
                         content: status.logs.map{|l| l.class.to_s + " : " + l.line}.join(''),
@@ -186,7 +185,18 @@ def install(name, do_reuse = false)
           log_id = log.id
         end
 
+        if C.notification == 'twitter'
+          puts "Sending a tweet..."
+          sentence = if updated then
+                       "OK! #{name}."
+                     else
+                       "Failed to build #{name}."
+                     end
+          C.twitter_client.update("@yutopp #{sentence} #{Time.now} / http://packages.sc.yutopp.net:8080/log/#{log_id}")
+        end
+
       rescue => e
+        puts "rescued in install => #{e}"
         # ...
       end
 

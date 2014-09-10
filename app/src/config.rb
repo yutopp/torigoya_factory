@@ -51,8 +51,6 @@ module Torigoya
         puts "Loading: #{config_path}"
 
         #
-        @host                   = @config['host']
-        @port                   = @config['port']
         @install_path           = @config['install_path'] % { :_home => rp }
         @workspace_path         = @config['workspace_path'] % { :_home => rp }
         @package_scripts_path   = @config['package_scripts_path'] % { :_home => rp }
@@ -81,7 +79,7 @@ module Torigoya
           end
         end
       end
-      attr_reader :host, :port, :install_path, :workspace_path, :placeholder_path, :package_scripts_path
+      attr_reader :install_path, :workspace_path, :placeholder_path, :package_scripts_path
       attr_reader :apt_repository_path, :target_system, :target_arch
       attr_reader :admin_pass_sha512, :session_secret
       attr_reader :notification, :twitter_client
