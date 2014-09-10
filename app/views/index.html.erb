@@ -4,26 +4,36 @@
       <%= @builder.platform_package_script_dir() %><br>
       <%= @builder.package_list_revision %>
       <a href="/pull_package_list">git pull origin master</a>
-      <ui>
+      <ul>
           <% @builder.installers.each do |name| %>
-              <li><a href="packaging_and_install/<%= name %>"><%= name %></a>[<a href="packaging_and_install/<%= name %>/reuse">reuse</a>] / (<a href="packaging_and_install_lazy/<%= name %>">lazy</a> [<a href="packaging_and_install_lazy/<%= name %>/reuse">reuse</a>])</li>
+              <li>
+                  <%= name %>
+                  <ul>
+                      <li>
+                          <strong><a href="packaging_and_install_lazy/<%= name %>">to queue</a></strong> [<a href="packaging_and_install_lazy/<%= name %>/reuse">reuse</a>]
+                          / <a href="packaging_and_install/<%= name %>">exec</a> [<a href="packaging_and_install/<%= name %>/reuse">reuse</a>]
+                      </li>
+                  </ul>
+              </li>
           <% end %>
-      </ui>
+      </ul>
   </div>
 
   <div class="col-md-3">
       <h1>Queue</h1>
       Number of tasks: <%= @tasks_queue.size %><br>
-      <% @tasks_queue.each_with_index do |td, index| %>
-          <li>
-              <% if index == 0 %>
-                  <strong>Running =></strong>
-              <% else %>
-                  <%= index %>.
-              <% end %>
-               <%= td.name %>
-          </li>
-      <% end %>
+      <ul>
+          <% @tasks_queue.each_with_index do |td, index| %>
+              <li>
+                  <% if index == 0 %>
+                      <strong>Running =></strong>
+                  <% else %>
+                      <%= index %>.
+                  <% end %>
+                  <%= td.name %>
+              </li>
+          <% end %>
+      </ul>
   </div>
 
   <div class="col-md-5">
@@ -37,7 +47,7 @@
       <a href="/deliver_messages">nodes</a>
 
       <h1>Tasks</h1>
-      <ui>
+      <ul>
           <% @tasks.reverse.each_with_index do |status, index| %>
               <li>
                   <%= status.is_active ? "(active)" : "(finished)" %>
@@ -45,7 +55,7 @@
                   <a href="status/<%= @tasks.length - index - 1 %>"><%= status.name %></a>
               </li>
           <% end %>
-      </ui>
+      </ul>
 
       <h1>Temporary packages</h1>
       <a href="/temp">tmps</a>

@@ -1,7 +1,7 @@
 <h1><%= @dir_name %></h1>
 <p>To delete package, click package name.</p>
-<ui>
+<ul>
 <% @files.each do |f_name| %>
     <li><a href='/temp/delete/<%= f_name %>'><%= f_name %></a></li>
 <% end %>
-</ui>
+</ul>

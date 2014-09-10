@@ -1,7 +1,7 @@
 <h1>packages</h1>
 <p>To delete package, click package name.</p>
-<ui>
+<ul>
 <% @registered_packages.each do |package_name| %>
     <li><a href='/packages/delete/<%= package_name %>'><%= package_name %></a></li>
 <% end %>
-</ui>
+</ul>
