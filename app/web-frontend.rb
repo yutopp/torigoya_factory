@@ -207,12 +207,17 @@ end
 #
 # ========================================
 get '/pull_package_list' do
-  builder = Torigoya::BuildServer::Builder.new(C)
-  succeeded, message = builder.pull_package_list
-  if succeeded
-    redirect '/'
+  if login?
+    builder = Torigoya::BuildServer::Builder.new(C)
+    succeeded, message = builder.pull_package_list
+    if succeeded
+      redirect '/'
+    else
+      return message
+    end
+
   else
-    return message
+    return unauthed_error()
   end
 end
 
@@ -360,17 +365,22 @@ end
 # ========================================
 #
 get '/temp' do
-  builder = Torigoya::BuildServer::Builder.new(C)
+  if login?
+    builder = Torigoya::BuildServer::Builder.new(C)
 
-  @dir_name = builder.placeholder_path
-  @files = []
-  Dir.chdir(builder.placeholder_path) do
-    Dir.glob('*.deb') do |f_name|
-      @files << f_name
+    @dir_name = builder.placeholder_path
+    @files = []
+    Dir.chdir(builder.placeholder_path) do
+      Dir.glob('*.deb') do |f_name|
+        @files << f_name
+      end
     end
-  end
 
-  erb 'temp.html'.to_sym
+    erb 'temp.html'.to_sym
+
+  else
+    return unauthed_error()
+  end
 end
 
 #
