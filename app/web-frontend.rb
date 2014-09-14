@@ -562,6 +562,7 @@ post "/webhook/:target" do
 
     github_sig = request.env['HTTP_X_HUB_SIGNATURE']
 
+    hook = nil
     ActiveRecord::Base.connection_pool.with_connection do
       hook = WebHook.find_by_target(target)
     end
