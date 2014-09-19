@@ -260,7 +260,7 @@ module Torigoya
               :err => w_err_pipe
             }
 
-            pid = Process.spawn(envs, "./#{script_name}", options)
+            pid = Process.spawn(envs, "bash #{script_name}", options)
             w_out_pipe.close
             w_err_pipe.close
 
