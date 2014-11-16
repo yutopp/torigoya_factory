@@ -93,8 +93,10 @@ class TaskQueue
     @th = Thread.new do
       while td = @queue.pop
         begin
-          status = install(td.name, td.do_reuse)
-          status.join
+          if td.name != "<NONE>"
+            status = install(td.name, td.do_reuse)
+            status.join
+          end
 
           #
           @m.synchronize do
