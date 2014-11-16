@@ -192,7 +192,7 @@ def install(name, do_reuse = false)
                      else
                        "Failed to build #{name}."
                      end
-          C.twitter_client.update("@yutopp #{sentence} #{Time.now} / http://packages.sc.yutopp.net:8080/log/#{log_id}")
+          C.twitter_client.update("@yutopp @wx257osn2 #{sentence} #{Time.now} / http://packages.sc.yutopp.net:8080/log/#{log_id}")
         end
 
       rescue => e
