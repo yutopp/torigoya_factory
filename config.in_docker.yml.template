@@ -6,6 +6,7 @@ placeholder_path: "/etc/placeholder"
 apt_repository_path: "/etc/apt_repository"
 target_system: "x86_64-linux-gnu"
 target_arch: "amd64"
+profile_git_repo: "https://github.com/yutopp/torigoya_proc_profiles.git"
 
 #
 admin_pass_sha512: "[put your password. see README]"

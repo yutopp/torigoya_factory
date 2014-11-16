@@ -269,7 +269,44 @@ def register_to_repository()
     end
   end
 
+  # update proc_table
+  if err.nil?
+    is_succeeded, p_message = update_proc_profile
+    msg = "#{message} / #{p_message}"
+    if is_succeeded
+      return [msg, nil]
+    else
+      return [msg, p_message]
+    end
+  end
+
   return [message, err]
+end
+
+
+##
+def update_proc_profile
+  updater = Torigoya::BuildServer::ProcProfileUpdater.new(C)
+  is_succeeded, message = updater.host_updated_zip
+
+  ActiveRecord::Base.connection_pool.with_connection do
+    if is_succeeded
+      l = Log.new(title: "update_proc_profile: success",
+                  content: message,
+                  status: 0,
+                  )
+      l.save!
+
+    else
+      l = Log.new(title: "update_proc_profile: failed",
+                  content: message,
+                  status: -1,
+                  )
+      l.save!
+    end
+  end
+
+  return is_succeeded, message
 end
 
 

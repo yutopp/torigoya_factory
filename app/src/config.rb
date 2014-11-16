@@ -58,6 +58,7 @@ module Torigoya
         @apt_repository_path    = @config['apt_repository_path'] % { :_home => rp }
         @target_system          = @config['target_system']
         @target_arch            = @config['target_arch']
+        @profile_git_repo       = @config['profile_git_repo']
 
         @admin_pass_sha512      = @config['admin_pass_sha512']
         if @admin_pass_sha512.nil?
@@ -80,7 +81,7 @@ module Torigoya
         end
       end
       attr_reader :install_path, :workspace_path, :placeholder_path, :package_scripts_path
-      attr_reader :apt_repository_path, :target_system, :target_arch
+      attr_reader :apt_repository_path, :target_system, :target_arch, :profile_git_repo
       attr_reader :admin_pass_sha512, :session_secret
       attr_reader :notification, :twitter_client
     end

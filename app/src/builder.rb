@@ -305,5 +305,67 @@ module Torigoya
       end
 
     end # class Builder
+
+
+    class ProcProfileUpdater
+      def initialize(config)
+        @config = config
+      end
+
+      def remove_repo
+        Guard.sync do
+          Dir.chdir('/tmp') do
+            if File.exist?('proc_profile')
+              return system('rm -rf proc_profile')
+            end
+          end
+        end
+      end
+
+      def host_updated_zip
+        Guard.sync do
+          Dir.chdir('/tmp') do
+            dir_name = 'torigoya_proc_profiles-master'
+
+            # update repo
+            if File.exist?(dir_name)
+              Dir.chdir(dir_name) do
+                r = system("git reset --hard origin/master")
+                return false, "Failed to reset proc profile" unless r
+
+                r = system("git pull origin master")
+                return false, "Failed to update proc profile" unless r
+              end
+
+            else
+              r = system("git clone #{@config.profile_git_repo} #{dir_name}")
+              return false, "Failed to clone proc profile" unless r
+            end
+
+            # generate files
+            Dir.chdir(dir_name) do
+              table_dir = File.join(@config.apt_repository_path, '/available_package_table')
+              Bundler.with_clean_env do
+                r = system("./generate.sh -l #{table_dir}")
+                return false, "Failed to generate proc profile" unless r
+              end
+            end
+
+            # packing
+            r=system("zip -r #{dir_name}.zip #{File.join(dir_name, 'lang.*')} #{File.join(dir_name, 'languages.yml')}")
+            return false, "Failed to pack proc profile" unless r
+
+            # host
+            f_name = File.join(@config.apt_repository_path, "/#{dir_name}.zip")
+            r=system("mv #{dir_name}.zip #{f_name}")
+            return false, "Failed to host proc profile" unless r
+          end
+        end # Guard.sync
+
+        return true, "succeeded"
+      end
+
+    end # class ProcProfileUpdater
+
   end # module BuildServer
 end # module Torigoya

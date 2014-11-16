@@ -359,6 +359,26 @@ get '/status/:index' do
 end
 
 
+# ========================================
+#
+# ========================================
+#
+get '/generate_proc_profile' do
+  if login?
+    is_succeeded, message = update_proc_profile
+    #
+    if is_succeeded
+      @body = "succees: #{message}"
+    else
+      @body = "failed: #{err}"
+    end
+    erb 'generate_proc_profile.html'.to_sym
+
+  else
+    return unauthed_error()
+  end
+end
+
 
 # ========================================
 #
