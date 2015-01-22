@@ -48,6 +48,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                                           "cd /vagrant/app; bundle exec rake db:create",
                                           "cd /vagrant/app; bundle exec rake db:migrate",
                                           "sudo kill -9 `sudo lsof -i:80 -t`",
-                                          "service nginx start"
+                                          "service nginx start",
+                                          "cp /vagrant/.hgrc /home/vagrant/."
                                          ].join("; ")
 end

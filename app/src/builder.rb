@@ -4,6 +4,8 @@ require 'fileutils'
 require 'thread'
 require 'torigoya_kit'
 require 'singleton'
+require 'shellwords'
+require 'bundler'
 
 module Torigoya
   module BuildServer
@@ -72,27 +74,17 @@ module Torigoya
       end
 
       def check_package_list_revision
-        Guard.sync do
-          Dir.chdir(@config.package_scripts_path) do
-            return `git log --pretty=format:"%H" -1 | cut -c 1-10`
-          end
-        end
+        return `cd #{Shellwords.escape @config.package_scripts_path} && git log --pretty=format:"%H" -1 | cut -c 1-10`
       end
 
       def pull_package_list
-        Guard.sync do
-          Dir.chdir(@config.package_scripts_path) do
-            begin
-              message = `git pull origin master`
-              succeeded = $?.exitstatus == 0
+        message = `cd #{Shellwords.escape @config.package_scripts_path} && git pull origin master`
+        succeeded = $?.exitstatus == 0
 
-              return succeeded, message
+        return succeeded, message
 
-            rescue => e
-              return false, e.to_s
-            end
-          end
-        end
+      rescue => e
+        return false, e.to_s
       end
 
       #
@@ -144,28 +136,21 @@ module Torigoya
         puts "= globbing #{@config.placeholder_path} ..."
 
         pkg_profiles = []
-        Guard.sync do
-          Dir.chdir( @config.placeholder_path ) do
-            Dir.glob( "*.deb" ) do |pkgname|
-              #system( "cp -v #{pkgname} #{@config.for_copy_nfs_mount_path}/.")
-              mtime = File::Stat.new( pkgname ).mtime
-              pkg_profiles << TorigoyaKit::Package::AvailableProfile.new( pkgname, mtime )
+        Dir.glob( "#{Shellwords.escape @config.placeholder_path}/*.deb" ) do |full_pkgname|
+          pkgname = File.basename full_pkgname
+          #system( "cp -v #{pkgname} #{@config.for_copy_nfs_mount_path}/.")
+          mtime = File::Stat.new( full_pkgname ).mtime
+          pkg_profiles << TorigoyaKit::Package::AvailableProfile.new( pkgname, mtime )
 
-              puts "=> #{pkgname} / #{mtime}"
-            end
-          end
+          puts "=> #{pkgname} / #{mtime}"
         end
 
         message, err = block.call(@config.placeholder_path, pkg_profiles)
 
         if err == nil && pkg_profiles.length > 0
           # delete temporary
-          Guard.sync do
-            Dir.chdir( @config.placeholder_path ) do
-              pkg_profiles.each do |pkg_profile|
-                system( "rm -vf #{pkg_profile.package_name}")
-              end
-            end
+          pkg_profiles.each do |pkg_profile|
+            system "cd #{Shellwords.escape @config.placeholder_path} && rm -vf #{pkg_profile.package_name}"
           end
         end
 
@@ -177,12 +162,8 @@ module Torigoya
       def delete_temporary_packages!
         puts "= globbing #{@config.placeholder_path} ..."
 
-        Guard.sync do
-          Dir.chdir( @config.placeholder_path ) do
-            Dir.glob( "*.deb" ) do |pkgname|
-              system( "rm -v #{pkgname}")
-            end
-          end
+        Dir.glob( "#{Shellwords.escape @config.placeholder_path}/*.deb" ) do |pkgname|
+          system( "rm -v #{pkgname}")
         end
       end
 
@@ -207,13 +188,13 @@ module Torigoya
 
       #
       def make_packages_list
-        Guard.sync do
-          packages_list = Dir.chdir( platform_package_script_dir() ) do
-            next Dir::glob( "*.#{@platform_config[:ext]}" ).select {|f| f[0] != '_'}
-          end
+        sd = platform_package_script_dir()
+        glob_p = "#{Shellwords.escape sd}/*.#{@platform_config[:ext]}"
+        packages_list = Dir::glob(glob_p)
+                        .map {|f| File.basename f}
+                        .select {|f| f[0] != '_'}
 
-          return packages_list.sort!
-        end
+        return packages_list.sort!
       end
 
 
@@ -313,17 +294,13 @@ module Torigoya
       end
 
       def remove_repo
-        Guard.sync do
-          Dir.chdir('/tmp') do
-            if File.exist?('proc_profile')
-              return system('rm -rf proc_profile')
-            end
-          end
+        if File.exist?('/tmp/proc_profile')
+          return system('rm -rf /tmp/proc_profile')
         end
       end
 
       def host_updated_zip
-        Guard.sync do
+        pid = Process.fork do
           Dir.chdir('/tmp') do
             dir_name = 'torigoya_proc_profiles-master'
 
@@ -331,15 +308,15 @@ module Torigoya
             if File.exist?(dir_name)
               Dir.chdir(dir_name) do
                 r = system("git reset --hard origin/master")
-                return false, "Failed to reset proc profile" unless r
+                exit 1 unless r
 
                 r = system("git pull origin master")
-                return false, "Failed to update proc profile" unless r
+                exit 2 unless r
               end
 
             else
               r = system("git clone #{@config.profile_git_repo} #{dir_name}")
-              return false, "Failed to clone proc profile" unless r
+              exit 3 unless r
             end
 
             # generate files
@@ -347,22 +324,40 @@ module Torigoya
               table_dir = File.join(@config.apt_repository_path, '/available_package_table')
               Bundler.with_clean_env do
                 r = system("./generate.sh -l #{table_dir}")
-                return false, "Failed to generate proc profile" unless r
+                exit 4 unless r
               end
             end
 
             # packing
-            r=system("zip -r #{dir_name}.zip #{File.join(dir_name, 'lang.*')} #{File.join(dir_name, 'languages.yml')}")
-            return false, "Failed to pack proc profile" unless r
+            r = system("zip -r #{dir_name}.zip #{File.join(dir_name, 'lang.*')} #{File.join(dir_name, 'languages.yml')}")
+            exit 5 unless r
 
             # host
             f_name = File.join(@config.apt_repository_path, "/#{dir_name}.zip")
-            r=system("mv #{dir_name}.zip #{f_name}")
-            return false, "Failed to host proc profile" unless r
+            r = system("mv #{dir_name}.zip #{f_name}")
+            exit 6 unless r
           end
-        end # Guard.sync
+        end # Process.fork
+        _, status = Process.waitpid2 pid
 
-        return true, "succeeded"
+        case status.exitstatus
+        when 0
+          return true, "succeeded"
+        when 1
+          return false, "Failed to reset proc profile"
+        when 2
+          return false, "Failed to update proc profile"
+        when 3
+          return false, "Failed to clone proc profile"
+        when 4
+          return false, "Failed to generate proc profile"
+        when 5
+          return false, "Failed to pack proc profile"
+        when 6
+          return false, "Failed to host proc profile"
+        else
+          return false, "Unexpected error"
+        end
       end
 
     end # class ProcProfileUpdater
