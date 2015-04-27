@@ -11,9 +11,6 @@ echo "Torigoya factory: a port of files    : 80"
 echo "Torigoya factory: a port of frontend : 8080"
 
 cp -r ../torigoya_proc_profiles -T proc_profiles
-cd proc_profiles
-./generate.sh -l ${APT_REPOSITORY_PATH}/available_package_table
-cd ..
 
 ./docker.stop.sh &&
 ./docker.build.sh &&

@@ -31,4 +31,4 @@ RUN cd /etc/app; bundle update
 EXPOSE 80
 EXPOSE 8080
 
-CMD nginx && cd /etc/app && bundle exec rake db:migrate && bundle exec ruby web-frontend.rb
+CMD cd /etc/proc_profiles && ./generate.sh -l /etc/apt_repository/available_package_table && nginx && cd /etc/app && bundle exec rake db:migrate && bundle exec ruby web-frontend.rb
