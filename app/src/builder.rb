@@ -189,10 +189,10 @@ module Torigoya
       #
       def make_packages_list
         sd = platform_package_script_dir()
-        glob_p = "#{Shellwords.escape sd}/*.#{@platform_config[:ext]}"
+        glob_p = "#{Shellwords.escape sd}/**/*.#{@platform_config[:ext]}"
         packages_list = Dir::glob(glob_p)
-                        .map {|f| File.basename f}
-                        .select {|f| f[0] != '_'}
+                        .select {|f| (File.basename f)[0] != '_'}
+                        .map {|f| f[sd.length+1..f.length]}
 
         return packages_list.sort!
       end
